@@ -12,15 +12,15 @@ function Dashboard() {
   if (user) {
     const userType = user.user_metadata?.userType;
     if (userType === "provider") {
-      return <Navigate to="/provider" replace />;
+      return <Navigate to="/provider" replace={false} />;
     }
     if (userType === "doctor") {
-      return <Navigate to="/doctor" replace />;
+      return <Navigate to="/doctor" replace={false} />;
     }
   }
 
   // Fallback
-  return <Navigate to="/" replace />;
+  return <Navigate to="/" replace={false} />;
 }
 
 export default Dashboard;

@@ -14,13 +14,15 @@ function RoleProtectedRoute({children, role}) {
     if (userType === role) {
       return children;
     } else {
-      if (userType === "provider") return <Navigate to="/provider" replace />;
-      if (userType === "doctor") return <Navigate to="/doctor" replace />;
-      return <Navigate to="/dashboard" replace />;
+      if (userType === "provider")
+        return <Navigate to="/provider" replace={false} />;
+      if (userType === "doctor")
+        return <Navigate to="/doctor" replace={false} />;
+      return <Navigate to="/dashboard" replace={false} />;
     }
   }
 
-  return <Navigate to="/login" replace />;
+  return <Navigate to="/login" replace={false} />;
 }
 
 export default RoleProtectedRoute;

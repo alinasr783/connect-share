@@ -12,7 +12,7 @@ function useSignup() {
         onSuccess: (user) => {
             console.log(user);
             toast.success("Signup successful");
-            navigate("/dashboard");
+            navigate("/dashboard", { replace: false });
         },
 
         onError: (error) => {

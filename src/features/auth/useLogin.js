@@ -12,7 +12,7 @@ function useLogin() {
         onSuccess: () => {
             toast.success("Login successful");
 
-            navigate("/dashboard");
+            navigate("/dashboard", { replace: false });
         },
 
         onError: (error) => {
