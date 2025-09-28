@@ -12,11 +12,12 @@ function useLogout() {
         onSuccess: () => {
             toast.success("Logged out successfully");
             queryClient.clear(); // Clear all cached data
-            navigate("/");
+            navigate("/", { replace: true });
         },
+
         onError: (error) => {
             console.error('Logout error:', error);
-            toast.error('Error logging out');
+            toast.error(error.message || 'Error logging out');
         },
     });
 

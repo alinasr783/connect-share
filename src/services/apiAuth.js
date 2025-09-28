@@ -1,7 +1,7 @@
 import supabase from "./supabase";
 import { uploadSyndicateCard } from "./apiStorage";
 
-export async function signup({ fullName, email, userType, password, syndicateCardFile }) {
+export async function signup({ fullName, email, userType, password, syndicateCardFile, specialties }) {
     try {
         // 1. Check if user already exists
         const { data: existingUser, error: userCheckError } = await supabase
@@ -25,12 +25,12 @@ export async function signup({ fullName, email, userType, password, syndicateCar
             avatar: '',
             phone: '',
             medicalLicenseNumber: '',
-            specialty: '',
         };
 
-        // Add syndicate card data for doctors
+        // Add doctor-specific data
         if (userType === 'doctor') {
             authUserData.syndicateCardImage = ''; // Will be updated after upload
+            authUserData.specialties = specialties || [];
         }
 
         const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -55,8 +55,8 @@ export async function signup({ fullName, email, userType, password, syndicateCar
         // Add doctor-specific fields if user is a doctor
         if (userType === 'doctor') {
             userInsertData.medicalLicenseNumber = '';
-            userInsertData.specialty = '';
             userInsertData.syndicate_card = ''; // Will be updated after upload
+            userInsertData.specialties = specialties || [];
         }
 
         const { error: userError } = await supabase
@@ -112,8 +112,11 @@ export async function login({ email, password }) {
 }
 
 export async function logout() {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut()
+
     if (error) throw new Error('Error logging out: ' + error.message);
+
+    return { success: true };
 }
 
 export async function getCurrentUser() {
