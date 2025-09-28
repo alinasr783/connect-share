@@ -17,9 +17,7 @@ function Signup() {
   }
 
   return (
-    <div className="flex flex-col items-center h-screen justify-center">
-      <Heading as="h2">Register</Heading>
-
+    <div className="flex items-center min-h-screen justify-center bg-gray-50 py-8">
       <SignupForm />
     </div>
   );
