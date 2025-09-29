@@ -1,4 +1,3 @@
-// Steps data
 const ownersSteps = [
   {
     id: 1,
@@ -35,36 +34,34 @@ const doctorsSteps = [
   },
 ];
 
-function NumberBadge({n}) {
-  return (
-    <div
-      className="flex-shrink-0 w-8 h-8 rounded-full bg-[var(--color-secondary)] 
-        text-[var(--color-primary)] font-bold grid place-items-center">
-      {n}
-    </div>
-  );
-}
+const NumberBadge = ({n}) => (
+  <div
+    className="flex-shrink-0 w-8 h-8 rounded-full bg-[var(--color-secondary)] 
+      text-[var(--color-primary)] font-bold grid place-items-center">
+    {n}
+  </div>
+);
 
-function StepsList({title, steps}) {
-  return (
+const StepItem = ({step}) => (
+  <li className="flex items-start gap-4 animate-fade-in-up">
+    <NumberBadge n={step.id} />
     <div>
-      <h3 className="text-xl font-semibold text-gray-900 mb-6">{title}</h3>
-      <ul className="space-y-6">
-        {steps.map((s) => (
-          <li key={s.id} className="flex items-start gap-4">
-            <NumberBadge n={s.id} />
-            <div>
-              <p className="text-gray-900 font-semibold">{s.title}</p>
-              <p className="mt-1 text-gray-600 text-sm leading-relaxed">
-                {s.desc}
-              </p>
-            </div>
-          </li>
-        ))}
-      </ul>
+      <p className="text-gray-900 font-semibold">{step.title}</p>
+      <p className="mt-1 text-gray-600 text-sm leading-relaxed">{step.desc}</p>
     </div>
-  );
-}
+  </li>
+);
+
+const StepsList = ({title, steps}) => (
+  <div>
+    <h3 className="text-xl font-semibold text-gray-900 mb-6">{title}</h3>
+    <ul className="space-y-6">
+      {steps.map((step) => (
+        <StepItem key={step.id} step={step} />
+      ))}
+    </ul>
+  </div>
+);
 
 function HowItWorks() {
   return (

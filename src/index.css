@@ -1,31 +1,74 @@
-@import url("https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800;900&display=swap");
 @import "remixicon/fonts/remixicon.css";
 
 @import "tailwindcss";
 @tailwind utilities;
 
 @layer base {
+  /* Performance optimizations */
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-noto-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
   .btn-primary {
     @apply bg-[var(--color-primary)] text-gray-100 font-bold px-5 py-2 rounded-lg;
+    will-change: transform;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(19, 182, 236, 0.3);
   }
 
   .btn-secondary {
     @apply bg-[var(--color-primary)]/30 text-gray-700 font-bold px-5 py-2 rounded-lg;
+    will-change: transform;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .btn-secondary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(19, 182, 236, 0.2);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-feature-settings: "kern" 1;
+    text-rendering: optimizeLegibility;
   }
 
   h2 {
     @apply text-2xl sm:text-3xl md:text-4xl font-bold mb-6 text-gray-700;
+    line-height: 1.2;
   }
 
   .input {
     @apply w-full px-3 py-3 mt-1 border border-gray-300 rounded-md focus:outline-none 
     focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] sm:text-sm;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
   }
 
   .input-icon {
     @apply w-full pl-10 pr-4 py-2 border border-gray-300 
     rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 
     focus:border-transparent;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
   }
 
   .spinnerMini {
@@ -40,7 +83,9 @@
     -webkit-mask-composite: source-out;
     mask-composite: subtract;
     animation: l3 1s infinite linear;
+    will-change: transform;
   }
+
   @keyframes l3 {
     to {
       transform: rotate(1turn);
@@ -54,12 +99,51 @@
     border: 8px solid var(--color-primary);
     border-top-color: transparent;
     animation: spin 1s infinite linear;
+    will-change: transform;
   }
 
   @keyframes spin {
     to {
       transform: rotate(360deg);
     }
+  }
+
+  /* Performance-optimized animations */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
+  }
+
+  .hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
   }
 }
 

@@ -1,11 +1,21 @@
+import {lazy, Suspense, memo} from "react";
 import Header from "../Header/Header";
 import Hero from "./Hero";
-import WhyUs from "./WhyUs";
-import HowItWorks from "./HowItWorks";
-import Testimonials from "./Testimonials";
-import FAQ from "./FAQ";
-import Start from "./Start";
-import Footer from "./Footer";
+import Spinner from "../Spinner";
+
+// Lazy load non-critical components
+const WhyUs = lazy(() => import("./WhyUs"));
+const HowItWorks = lazy(() => import("./HowItWorks"));
+const Testimonials = lazy(() => import("./Testimonials"));
+const FAQ = lazy(() => import("./FAQ"));
+const Start = lazy(() => import("./Start"));
+const Footer = lazy(() => import("./Footer"));
+
+const SectionLoader = () => (
+  <div className="flex justify-center items-center py-16">
+    <Spinner />
+  </div>
+);
 
 function Home() {
   return (
@@ -16,21 +26,34 @@ function Home() {
         <Hero />
 
         <div className="max-w-7xl px-4 mx-auto">
-          <WhyUs />
+          <Suspense fallback={<SectionLoader />}>
+            <WhyUs />
+          </Suspense>
 
-          <HowItWorks />
+          <Suspense fallback={<SectionLoader />}>
+            <HowItWorks />
+          </Suspense>
 
-          <Testimonials />
+          <Suspense fallback={<SectionLoader />}>
+            <Testimonials />
+          </Suspense>
 
-          <FAQ />
+          <Suspense fallback={<SectionLoader />}>
+            <FAQ />
+          </Suspense>
 
-          <Start />
+          <Suspense fallback={<SectionLoader />}>
+            <Start />
+          </Suspense>
         </div>
 
-        <Footer />
+        <Suspense fallback={<SectionLoader />}>
+          <Footer />
+        </Suspense>
       </main>
     </div>
   );
 }
 
-export default Home;
+// Memoize the component to prevent unnecessary re-renders
+export default memo(Home);

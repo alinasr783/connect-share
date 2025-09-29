@@ -1,23 +1,37 @@
 import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
-import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
 import {Toaster} from "react-hot-toast";
 import {BrowserRouter, Navigate, Route, Routes} from "react-router-dom";
+import {lazy, Suspense} from "react";
 import useAuthListener from "./features/auth/useAuthListener";
-import DoctorAppLayout from "./features/Dashboard/DoctorAppLayout";
-import ProviderAppLayout from "./features/Dashboard/ProviderAppLayout";
-import ProviderDashboard from "./features/Dashboard/ProviderDashboard";
-import Dashboard from "./pages/Dashboard";
-import Login from "./pages/Login";
-import ProviderClinics from "./pages/ProviderClinics";
-import ProviderRentals from "./pages/ProviderRentals";
-import {default as ProviderSettings} from "./pages/ProviderSettings";
-import Signup from "./pages/Signup";
 import Home from "./ui/Home/Home";
 import NotFound from "./ui/NotFound";
 import ProtectedRoutes from "./ui/ProtectedRoutes";
 import RoleProtectedRoute from "./ui/RoleProtectedRoute";
-import ProviderPayments from "./pages/ProviderPayments";
-import DoctorFindClinics from "./pages/DoctorFindClinics";
+import Spinner from "./ui/Spinner";
+
+// Lazy load all non-critical components
+const ReactQueryDevtools = lazy(() =>
+  import("@tanstack/react-query-devtools").then((module) => ({
+    default: module.ReactQueryDevtools,
+  }))
+);
+const DoctorAppLayout = lazy(() =>
+  import("./features/Dashboard/DoctorAppLayout")
+);
+const ProviderAppLayout = lazy(() =>
+  import("./features/Dashboard/ProviderAppLayout")
+);
+const ProviderDashboard = lazy(() =>
+  import("./features/Dashboard/ProviderDashboard")
+);
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Login = lazy(() => import("./pages/Login"));
+const ProviderClinics = lazy(() => import("./pages/ProviderClinics"));
+const ProviderRentals = lazy(() => import("./pages/ProviderRentals"));
+const ProviderSettings = lazy(() => import("./pages/ProviderSettings"));
+const Signup = lazy(() => import("./pages/Signup"));
+const ProviderPayments = lazy(() => import("./pages/ProviderPayments"));
+const DoctorFindClinics = lazy(() => import("./pages/DoctorFindClinics"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,7 +44,12 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" />
+      <Suspense fallback={<Spinner />}>
+        <ReactQueryDevtools
+          initialIsOpen={false}
+          buttonPosition="bottom-left"
+        />
+      </Suspense>
       <AuthWrapper />
     </QueryClientProvider>
   );
@@ -41,46 +60,48 @@ function AuthWrapper() {
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
+      <Suspense fallback={<Spinner />}>
+        <Routes>
+          <Route path="/" element={<Home />} />
 
-        <Route element={<ProtectedRoutes />}>
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route
-            path="provider"
-            element={
-              <RoleProtectedRoute role="provider">
-                <ProviderAppLayout />
-              </RoleProtectedRoute>
-            }>
-            <Route index element={<Navigate to="dashboard" />} />
-            <Route path="dashboard" element={<ProviderDashboard />} />
-            <Route path="clinics" element={<ProviderClinics />} />
-            <Route path="rentals" element={<ProviderRentals />} />
-            <Route path="payments" element={<ProviderPayments />} />
-            <Route path="settings" element={<ProviderSettings />} />
+          <Route element={<ProtectedRoutes />}>
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route
+              path="provider"
+              element={
+                <RoleProtectedRoute role="provider">
+                  <ProviderAppLayout />
+                </RoleProtectedRoute>
+              }>
+              <Route index element={<Navigate to="dashboard" />} />
+              <Route path="dashboard" element={<ProviderDashboard />} />
+              <Route path="clinics" element={<ProviderClinics />} />
+              <Route path="rentals" element={<ProviderRentals />} />
+              <Route path="payments" element={<ProviderPayments />} />
+              <Route path="settings" element={<ProviderSettings />} />
+            </Route>
+
+            <Route
+              path="doctor"
+              element={
+                <RoleProtectedRoute role="doctor">
+                  <DoctorAppLayout />
+                </RoleProtectedRoute>
+              }>
+              <Route index element={<Navigate to="clinics" />} />
+              <Route path="clinics" element={<DoctorFindClinics />} />
+              <Route path="rentals" element={<ProviderRentals />} />
+              <Route path="payments" element={<ProviderPayments />} />
+              <Route path="settings" element={<ProviderSettings />} />
+            </Route>
           </Route>
 
-          <Route
-            path="doctor"
-            element={
-              <RoleProtectedRoute role="doctor">
-                <DoctorAppLayout />
-              </RoleProtectedRoute>
-            }>
-            <Route index element={<Navigate to="clinics" />} />
-            <Route path="clinics" element={<DoctorFindClinics />} />
-            <Route path="rentals" element={<ProviderRentals />} />
-            <Route path="payments" element={<ProviderPayments />} />
-            <Route path="settings" element={<ProviderSettings />} />
-          </Route>
-        </Route>
+          <Route path="signup" element={<Signup />} />
+          <Route path="login" element={<Login />} />
 
-        <Route path="signup" element={<Signup />} />
-        <Route path="login" element={<Login />} />
-
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
 
       <Toaster
         position="top-center"
