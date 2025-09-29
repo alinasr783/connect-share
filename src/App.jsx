@@ -15,23 +15,6 @@ const ReactQueryDevtools = lazy(() =>
     default: module.ReactQueryDevtools,
   }))
 );
-const DoctorAppLayout = lazy(() =>
-  import("./features/Dashboard/DoctorAppLayout")
-);
-const ProviderAppLayout = lazy(() =>
-  import("./features/Dashboard/ProviderAppLayout")
-);
-const ProviderDashboard = lazy(() =>
-  import("./features/Dashboard/ProviderDashboard")
-);
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Login = lazy(() => import("./pages/Login"));
-const ProviderClinics = lazy(() => import("./pages/ProviderClinics"));
-const ProviderRentals = lazy(() => import("./pages/ProviderRentals"));
-const ProviderSettings = lazy(() => import("./pages/ProviderSettings"));
-const Signup = lazy(() => import("./pages/Signup"));
-const ProviderPayments = lazy(() => import("./pages/ProviderPayments"));
-const DoctorFindClinics = lazy(() => import("./pages/DoctorFindClinics"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
