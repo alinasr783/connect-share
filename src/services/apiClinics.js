@@ -119,12 +119,27 @@ export async function CreateUpdateClinic(clinicData, id) {
 export async function getFindClinics() {
     const { data, error } = await supabase
         .from('clinics')
-        .select('*')
+        .select('id, name, address, images, pricing')
         .order('created_at', { ascending: true });
 
     if (error) {
         console.error('Error finding clinics:', error);
         throw new Error('Error finding clinics');
+    }
+
+    return data;
+}
+
+export async function getFindClinicsById(id) {
+    const { data, error } = await supabase
+        .from('clinics')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+    if (error) {
+        console.error('Error finding clinic:', error);
+        throw new Error('Error finding clinic');
     }
 
     return data;

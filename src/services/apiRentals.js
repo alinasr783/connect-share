@@ -13,3 +13,16 @@ export async function getProviderRentals(userId) {
 
     return data;
 }
+
+export async function createRental(rental) {
+    const { data, error } = await supabase
+        .from("rentals")
+        .insert([rental]);
+
+    if (error) {
+        console.error(error);
+        throw new Error('Error creating rental');
+    }
+
+    return data;
+}

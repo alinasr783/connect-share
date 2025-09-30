@@ -191,7 +191,6 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
     handleImageUpload(e.target.files);
   };
 
-  // Pricing model handlers
   const handlePricingModelChange = (model) => {
     setPricingModel(model);
     if (model === "standard") {

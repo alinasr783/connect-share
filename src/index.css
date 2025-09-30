@@ -5,7 +5,6 @@
 @tailwind utilities;
 
 @layer base {
-  /* Performance optimizations */
   * {
     box-sizing: border-box;
   }
@@ -33,7 +32,7 @@
   }
 
   .btn-secondary {
-    @apply bg-[var(--color-primary)]/30 text-gray-700 font-bold px-5 py-2 rounded-lg;
+    @apply bg-gray-100 border border-gray-300 text-gray-700 font-bold px-5 py-2 rounded-lg;
     will-change: transform;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
@@ -55,6 +54,11 @@
 
   h2 {
     @apply text-2xl sm:text-3xl md:text-4xl font-bold mb-6 text-gray-700;
+    line-height: 1.2;
+  }
+
+  h3 {
+    @apply text-xl font-bold mb-6 text-gray-700;
     line-height: 1.2;
   }
 
@@ -108,7 +112,6 @@
     }
   }
 
-  /* Performance-optimized animations */
   @keyframes fadeInUp {
     from {
       opacity: 0;
@@ -150,12 +153,6 @@
 @theme {
   --color-primary: #13b6ec;
   --color-secondary: #d0f0fb;
-  --color-success: #ffffff;
-  --color-danger: #ffffff;
-  --color-warning: #ffffff;
-  --color-info: #ffffff;
-  --color-light: #ffffff;
-  --color-dark: #6666666;
 
   --font-noto-sans: "Noto Sans", sans-serif;
 }

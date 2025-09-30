@@ -233,9 +233,9 @@ function ProfileInformation() {
 
       <div className="flex justify-end pt-2">
         <Button
+          variation="primary"
           type="submit"
-          disabled={isUpdating || !isDirty}
-          className="btn-primary">
+          disabled={isUpdating || !isDirty}>
           {isUpdating ? "Saving..." : "Save Changes"}
         </Button>
       </div>

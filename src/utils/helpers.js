@@ -25,3 +25,12 @@ export const formatCurrency = (amount) => {
         currency: "EGP",
     });
 };
+
+export const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+    });
+};
+

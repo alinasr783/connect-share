@@ -18,6 +18,7 @@ import ProtectedRoutes from "./ui/ProtectedRoutes";
 import RoleProtectedRoute from "./ui/RoleProtectedRoute";
 import ProviderPayments from "./pages/ProviderPayments";
 import DoctorFindClinics from "./pages/DoctorFindClinics";
+import FindClinic from "./pages/FindClinic";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -70,6 +71,7 @@ function AuthWrapper() {
             }>
             <Route index element={<Navigate to="clinics" />} />
             <Route path="clinics" element={<DoctorFindClinics />} />
+            <Route path="clinics/:id" element={<FindClinic />} />
             <Route path="rentals" element={<ProviderRentals />} />
             <Route path="payments" element={<ProviderPayments />} />
             <Route path="settings" element={<ProviderSettings />} />
@@ -98,7 +100,7 @@ function AuthWrapper() {
             maxWidth: "500px",
             padding: "16px",
             borderRadius: "8px",
-            backgroundColor: "var(--color-success)",
+            backgroundColor: "var(--color-gray-50)",
             color: "var(--color-dark)",
           },
         }}

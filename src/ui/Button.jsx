@@ -8,7 +8,6 @@ function Button({
   onClick,
   size = "medium",
   className,
-  type = "button",
 }) {
   const sizeStyles = {
     small: ` text-xs sm:text-sm px-3 sm:px-4 py-1.5`,
@@ -18,18 +17,16 @@ function Button({
 
   // Base styles for each type
   const baseStyles = {
-    icon: ` ${sizeStyles[size]} text-gray-600 rounded-full 
-              hover:bg-gray-300 transition-colors 
-              duration-300 cursor-pointer inline-block disabled:cursor-not-allowed 
-              disabled:opacity-50 ${className}`,
+    icon: ` ${sizeStyles[size]} rounded-full w-10 h-10 flex items-center justify-center
+      cursor-pointer hover:bg-gray-200 border border-gray-300 ${className}`,
 
     primary: ` ${sizeStyles[size]} bg-primary text-white rounded-xl 
               hover:bg-primary/80 transition-colors 
               duration-300 cursor-pointer inline-block disabled:cursor-not-allowed 
               disabled:opacity-50 ${className}`,
 
-    secondary: ` ${sizeStyles[size]} bg-secondary text-white rounded-xl 
-              hover:bg-secondary/80 transition-colors 
+    secondary: ` ${sizeStyles[size]} bg-gray-100 border border-gray-300 text-gray-700 rounded-xl 
+              hover:bg-gray-100 transition-colors 
               duration-300 cursor-pointer inline-block disabled:cursor-not-allowed 
               disabled:opacity-50 ${className}`,
 
@@ -52,15 +49,14 @@ function Button({
       <button
         onClick={onClick}
         className={baseStyles[variation]}
-        disabled={disabled}
-        type={type}>
+        disabled={disabled}>
         {children}
       </button>
     );
   }
 
   return (
-    <button disabled={disabled} className={baseStyles[variation]} type={type}>
+    <button disabled={disabled} className={baseStyles[variation]}>
       {children}
     </button>
   );

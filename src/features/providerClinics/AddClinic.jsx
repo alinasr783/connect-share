@@ -13,7 +13,10 @@ function AddClinic() {
       </Button>
 
       {open && (
-        <Modal onClose={() => setOpen(false)} title="Add New Clinic">
+        <Modal
+          type="large"
+          onClose={() => setOpen(false)}
+          title="Add New Clinic">
           <CreateClinicForm onClose={() => setOpen(false)} />
         </Modal>
       )}
