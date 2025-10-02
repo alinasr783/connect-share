@@ -5,7 +5,7 @@ function Row({children, type = "row", className = ""}) {
   };
 
   return (
-    <div className={`flex gap-4 ${classNames[type]} ${className}`}>
+    <div className={`flex gap-4 mb-6 ${classNames[type]} ${className}`}>
       {children}
     </div>
   );

@@ -36,7 +36,7 @@ function FindClinicItem({clinic}) {
         </div>
       </div>
 
-      <div className="p-6">
+      <div className="pt-3 px-4 pb-5">
         <div className="flex items-center gap-2 mb-4">
           <i className="ri-map-pin-line text-[var(--color-primary)] text-lg"></i>
           <p className="text-sm text-gray-600">

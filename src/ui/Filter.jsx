@@ -20,7 +20,7 @@ function Filter({
   };
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative ${className} w-40`}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}

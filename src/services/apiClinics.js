@@ -1,3 +1,4 @@
+import { PAGE_SIZE } from "../constant/const";
 import supabase from "./supabase";
 
 export async function getProviderClinics(userId) {
@@ -116,18 +117,27 @@ export async function CreateUpdateClinic(clinicData, id) {
 }
 
 // Find clinics
-export async function getFindClinics() {
-    const { data, error } = await supabase
+export async function getFindClinics({ page }) {
+    const query = supabase
         .from('clinics')
-        .select('id, name, address, images, pricing')
-        .order('created_at', { ascending: true });
+        .select('id, name, address, images, pricing',
+            { count: 'exact' })
+        .order('created_at', { ascending: false });
+
+    if (page) {
+        const from = (page - 1) * PAGE_SIZE;
+        const to = page * PAGE_SIZE - 1;
+        query.range(from, to);
+    }
+
+    const { data, error, count } = await query;
 
     if (error) {
         console.error('Error finding clinics:', error);
         throw new Error('Error finding clinics');
     }
 
-    return data;
+    return { data, count }
 }
 
 export async function getFindClinicsById(id) {

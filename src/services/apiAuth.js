@@ -8,9 +8,9 @@ export async function signup({ fullName, email, userType, password, syndicateCar
             .from('users')
             .select('*')
             .eq('email', email)
-            .single();  // This ensures we get a single user or null
+            .single();
 
-        if (userCheckError && userCheckError.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
+        if (userCheckError && userCheckError.code !== 'PGRST116') {
             throw new Error('Error checking for existing user');
         }
 
@@ -29,7 +29,7 @@ export async function signup({ fullName, email, userType, password, syndicateCar
 
         // Add doctor-specific data
         if (userType === 'doctor') {
-            authUserData.syndicateCardImage = ''; // Will be updated after upload
+            authUserData.syndicateCardImage = '';
             authUserData.specialties = specialties || [];
         }
 
