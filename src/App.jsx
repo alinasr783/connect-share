@@ -19,6 +19,7 @@ import RoleProtectedRoute from "./ui/RoleProtectedRoute";
 import ProviderPayments from "./pages/ProviderPayments";
 import DoctorFindClinics from "./pages/DoctorFindClinics";
 import FindClinic from "./pages/FindClinic";
+import DoctorSupport from "./pages/DoctorSupport";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -75,6 +76,7 @@ function AuthWrapper() {
             <Route path="rentals" element={<ProviderRentals />} />
             <Route path="payments" element={<ProviderPayments />} />
             <Route path="settings" element={<ProviderSettings />} />
+            <Route path="support" element={<DoctorSupport />} />
           </Route>
         </Route>
 

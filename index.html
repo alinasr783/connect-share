@@ -4,140 +4,74 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Cache-Control"
+      content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <title>Connect Share - Find Your Perfect Clinic Space</title>
     <meta
       name="description"
-      content="Discover and book professional clinic spaces tailored to your needs. Connect with doctors and clinic owners seamlessly." />
+      content="Discover and book professional clinic spaces tailored 
+        to your needs. Connect with doctors and clinic owners seamlessly." />
 
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json" />
+    <!-- Theme and Mobile App Meta Tags -->
     <meta name="theme-color" content="#13b6ec" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Connect Share" />
     <link rel="apple-touch-icon" href="/images/icon-192x192.png" />
-    <link
-      rel="icon"
-      type="image/png"
-      sizes="32x32"
-      href="/images/icon-32x32.png" />
-    <link
-      rel="icon"
-      type="image/png"
-      sizes="16x16"
-      href="/images/icon-16x16.png" />
-
-    <!-- Preload critical resources -->
-    <link rel="preload" href="/images/hero.png" as="image" />
-    <link rel="preload" href="/src/index.css" as="style" />
-    <link
-      rel="preload"
-      href="https://fonts.gstatic.com/s/notosans/v36/o-0IIpQlx3QUlC5A4PNb4j5Ba_2c7A.woff2"
-      as="font"
-      type="font/woff2"
-      crossorigin />
-
-    <!-- Critical CSS inline -->
-    <style>
-      /* Critical CSS for above-the-fold content */
-      body {
-        font-family: "Noto Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
-          Roboto, sans-serif;
-        margin: 0;
-        padding: 0;
-        line-height: 1.6;
-        color: #333;
-      }
-
-      .hero-section {
-        position: relative;
-        height: calc(100vh - 4rem);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        background: linear-gradient(135deg, #13b6ec 0%, #0ea5d9 100%);
-        color: white;
-      }
-
-      .hero-content {
-        position: relative;
-        z-index: 10;
-        padding: 0 1rem;
-        max-width: 1200px;
-        margin: 0 auto;
-      }
-
-      .hero-title {
-        font-size: 2.5rem;
-        font-weight: 900;
-        margin: 0 0 1rem 0;
-        line-height: 1.2;
-      }
-
-      .hero-subtitle {
-        font-size: 1.125rem;
-        margin: 0 0 2rem 0;
-        opacity: 0.9;
-        max-width: 600px;
-        margin-left: auto;
-        margin-right: auto;
-      }
-
-      .hero-button {
-        display: inline-block;
-        background: white;
-        color: #13b6ec;
-        padding: 0.875rem 2rem;
-        border-radius: 0.5rem;
-        text-decoration: none;
-        font-weight: 700;
-        font-size: 1.125rem;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-      }
-
-      .hero-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-      }
-
-      @media (min-width: 640px) {
-        .hero-title {
-          font-size: 3.5rem;
-        }
-        .hero-subtitle {
-          font-size: 1.25rem;
-        }
-      }
-
-      @media (min-width: 768px) {
-        .hero-title {
-          font-size: 4.5rem;
-        }
-        .hero-subtitle {
-          font-size: 1.5rem;
-        }
-      }
-    </style>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
 
-    <!-- Service Worker Registration -->
+    <!-- Aggressive service worker cleanup -->
     <script>
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
+      // Clear all caches and unregister service workers immediately
+      (function () {
+        console.log("Starting aggressive cleanup...");
+
+        // Clear all caches
+        if ("caches" in window) {
+          caches.keys().then(function (names) {
+            console.log("Found caches:", names);
+            for (let name of names) {
+              caches.delete(name).then(() => {
+                console.log("Deleted cache:", name);
+              });
+            }
+          });
+        }
+
+        // Unregister all service workers
+        if ("serviceWorker" in navigator) {
           navigator.serviceWorker
-            .register("/sw.js")
-            .then((registration) => {
-              console.log("SW registered: ", registration);
-            })
-            .catch((registrationError) => {
-              console.log("SW registration failed: ", registrationError);
+            .getRegistrations()
+            .then(function (registrations) {
+              console.log("Found service workers:", registrations.length);
+              for (let registration of registrations) {
+                registration.unregister().then(() => {
+                  console.log(
+                    "Unregistered service worker:",
+                    registration.scope
+                  );
+                });
+              }
             });
-        });
-      }
+        }
+
+        // Force reload if service worker is still active
+        setTimeout(() => {
+          if (
+            "serviceWorker" in navigator &&
+            navigator.serviceWorker.controller
+          ) {
+            console.log("Service worker still active, reloading page...");
+            window.location.reload(true);
+          }
+        }, 1000);
+      })();
     </script>
   </body>
 </html>

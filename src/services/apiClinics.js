@@ -154,3 +154,18 @@ export async function getFindClinicsById(id) {
 
     return data;
 }
+
+export async function getCheckIfBooked(userId, clinicId) {
+    const { data, error } = await supabase
+        .from('rentals')
+        .select('*')
+        .eq('docId', userId)
+        .eq('clinicId', clinicId)
+
+    if (error) {
+        console.error('Error getting check if booked:', error);
+        throw new Error('Error getting check if booked');
+    }
+
+    return data;
+}

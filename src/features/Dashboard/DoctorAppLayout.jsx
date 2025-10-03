@@ -7,6 +7,7 @@ function DoctorAppLayout() {
     {to: "rentals", label: "My Bookings", icon: "ri-building-line"},
     {to: "payments", label: "Payments", icon: "ri-bank-card-line"},
     {to: "settings", label: "Profile Settings", icon: "ri-settings-line"},
+    {to: "support", label: "Help & Support", icon: "ri-question-line"},
   ];
 
   return (

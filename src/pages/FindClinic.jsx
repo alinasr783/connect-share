@@ -1,16 +1,17 @@
 import {useState} from "react";
+import {DayPicker} from "react-day-picker";
+import "react-day-picker/dist/style.css";
 import useUser from "../features/auth/useUser";
+import useCheckIfBooked from "../features/doctorFindClinics/useCheckIfBooked";
 import useCreateRental from "../features/doctorFindClinics/useCreactRental";
 import useFindClinic from "../features/doctorFindClinics/useFindClinic";
 import Button from "../ui/Button";
+import ConfirmAction from "../ui/ConfirmAction";
 import Empty from "../ui/Empty";
 import ImagesSlider from "../ui/ImagesSlider";
 import Spinner from "../ui/Spinner";
 import StatusBadge from "../ui/StatusBadge";
-import ConfirmAction from "../ui/ConfirmAction";
 import {formatCurrency, formatDate} from "../utils/helpers";
-import {DayPicker} from "react-day-picker";
-import "react-day-picker/dist/style.css";
 
 function RenderPricing({pricing, title}) {
   return (
@@ -35,7 +36,9 @@ function FindClinic() {
     to: null,
   });
 
-  if (isLoadingClinic) return <Spinner />;
+  const {rentals: isBooked, isLoadingRentals} = useCheckIfBooked(clinic?.id);
+
+  if (isLoadingClinic || isLoadingRentals) return <Spinner />;
 
   if (!clinic) {
     return (
@@ -223,12 +226,22 @@ function FindClinic() {
                           />
                         </div>
 
-                        {selectedDateRange?.from && selectedDateRange?.to && (
+                        {(selectedDateRange?.from || selectedDateRange?.to) && (
                           <div className="flex justify-between items-center">
                             <div className="text-sm text-gray-600">
                               <span className="font-medium">Selected:</span>{" "}
-                              {formatDate(selectedDateRange.from)} -{" "}
-                              {formatDate(selectedDateRange.to)}
+                              {selectedDateRange?.from && (
+                                <span>
+                                  From: {formatDate(selectedDateRange.from)}
+                                </span>
+                              )}
+                              {selectedDateRange?.from &&
+                                selectedDateRange?.to && <span> - </span>}
+                              {selectedDateRange?.to && (
+                                <span>
+                                  To: {formatDate(selectedDateRange.to)}
+                                </span>
+                              )}
                             </div>
                             <button
                               className="text-sm bg-gray-800 hover:bg-gray-900 
@@ -245,7 +258,7 @@ function FindClinic() {
                         {(!selectedDateRange?.from ||
                           !selectedDateRange?.to) && (
                           <p className="text-red-500 text-xs text-center">
-                            Please select a date range to continue
+                            Please select both start and end dates to continue
                           </p>
                         )}
                       </div>
@@ -259,11 +272,16 @@ function FindClinic() {
                     disabled={
                       isCreatingRental ||
                       !selectedDateRange?.from ||
-                      !selectedDateRange?.to
+                      !selectedDateRange?.to ||
+                      isBooked
                     }
                     onClick={handleBookClick}>
                     <i className="ri-calendar-check-line mr-2"></i>
-                    {isCreatingRental ? "Booking..." : "Book Now"}
+                    {isBooked
+                      ? "You have already booked this clinic"
+                      : isCreatingRental
+                      ? "Booking..."
+                      : "Book Now"}
                   </Button>
                 </div>
               )}
