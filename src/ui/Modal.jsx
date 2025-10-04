@@ -15,7 +15,7 @@ function Modal({children, onClose, title, type = "create"}) {
         overflow-y-auto">
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`bg-gray-100 rounded-xl overflow-hidden ${typeStyles[type]}`}>
+        className={`bg-gray-100 rounded-xl overflow-hidden max-w-7xl ${typeStyles[type]}`}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <h2 className="text-2xl font-semibold">{title}</h2>
           <Button variation="icon" size="small" onClick={onClose}>

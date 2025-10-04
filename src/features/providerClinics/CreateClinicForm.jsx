@@ -6,6 +6,7 @@ import Button from "../../ui/Button";
 import useUser from "../auth/useUser";
 import useCreateClinic from "./useCreateClinic";
 import useUpdateClinic from "./updateClinic";
+import AvailableHourse from "./AvailableHourse";
 
 function CreateClinicForm({clinicToEdit = {}, onClose}) {
   const {id: editId, ...editValues} = clinicToEdit;
@@ -28,7 +29,7 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
       : {},
   });
 
-  const [range, setRange] = useState(
+  const [availableDateRange, setAvailableDateRange] = useState(
     isEditSession
       ? {
           from: new Date(clinicToEdit.availableDate?.from),
@@ -36,7 +37,23 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
         }
       : undefined
   );
-  const [rangeError, setRangeError] = useState(null);
+  const [availableDateRangeError, setAvailableDateRangeError] = useState(null);
+
+  // Available hours state management
+  const [availableHours, setAvailableHours] = useState(
+    isEditSession && clinicToEdit.availableHours
+      ? {
+          startTime: clinicToEdit.availableHours.startTime || "09:00",
+          endTime: clinicToEdit.availableHours.endTime || "17:00",
+          selectedSlots: clinicToEdit.availableHours.selectedSlots || [],
+        }
+      : {
+          startTime: "09:00",
+          endTime: "17:00",
+          selectedSlots: [],
+        }
+  );
+  const [availableHoursError, setAvailableHoursError] = useState(null);
 
   // Features state management
   const [features, setFeatures] = useState(
@@ -109,10 +126,44 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
 
   const isLoading = isCreatingClinic || isUpdatingClinic || isUploadingImages;
 
-  const handleRangeSelect = (selectedRange) => {
-    setRange(selectedRange);
+  const handleAvailableDateRangeSelect = (selectedRange) => {
+    setAvailableDateRange(selectedRange);
     if (selectedRange?.from) {
-      setRangeError(null);
+      setAvailableDateRangeError(null);
+    }
+  };
+
+  // Time validation function
+  const validateTimeRange = (startTime, endTime) => {
+    if (!startTime || !endTime) {
+      return "Both start and end times are required";
+    }
+
+    const start = new Date(`2000-01-01T${startTime}`);
+    const end = new Date(`2000-01-01T${endTime}`);
+
+    if (start >= end) {
+      return "End time must be after start time";
+    }
+
+    return null;
+  };
+
+  const handleTimeChange = (field, value) => {
+    const newAvailableHours = {
+      ...availableHours,
+      [field]: value,
+    };
+
+    setAvailableHours(newAvailableHours);
+
+    // Validate the time range only for startTime and endTime
+    if (field === "startTime" || field === "endTime") {
+      const error = validateTimeRange(
+        newAvailableHours.startTime,
+        newAvailableHours.endTime
+      );
+      setAvailableHoursError(error);
     }
   };
 
@@ -210,14 +261,29 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
   };
 
   const onSubmit = async (data) => {
-    if (!range || !range.from) {
-      setRangeError("Please select a date range.");
+    if (!availableDateRange || !availableDateRange.from) {
+      setAvailableDateRangeError("Please select a date range.");
+      return;
+    }
+
+    // Validate available hours
+    const timeError = validateTimeRange(
+      availableHours.startTime,
+      availableHours.endTime
+    );
+    if (timeError) {
+      setAvailableHoursError(timeError);
+      return;
+    }
+
+    // Validate that start and end times are selected
+    if (!availableHours.startTime || !availableHours.endTime) {
+      setAvailableHoursError("Please select both start and end times");
       return;
     }
 
     // Separate new images (with file property) from existing URLs
     const newImages = images.filter((img) => img.file);
-    const existingImages = images.filter((img) => typeof img === "string");
 
     // Set uploading state if there are new images to upload
     if (newImages.length > 0) {
@@ -263,10 +329,13 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
       pricing: pricingData,
       images: newImages,
       availableDate: {
-        from: range?.from.toISOString(),
-        to: range?.to.toISOString(),
+        from: availableDateRange?.from.toISOString(),
+        to: availableDateRange?.to.toISOString(),
       },
+      availableHours: availableHours,
     };
+
+    console.log(clinicData);
 
     const callback = {
       onSuccess: () => {
@@ -754,12 +823,22 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
           <div className="flex items-center justify-center">
             <DayPicker
               mode="range"
-              selected={range}
+              selected={availableDateRange}
               disabled={isLoading}
-              onSelect={handleRangeSelect}
+              onSelect={handleAvailableDateRangeSelect}
             />
           </div>
-          {rangeError && <p className="text-red-500 mt-2">{rangeError}</p>}
+          {availableDateRangeError && (
+            <p className="text-red-500 mt-2">{availableDateRangeError}</p>
+          )}
+
+          {/* Available Hours Selection */}
+          <AvailableHourse
+            availableHours={availableHours}
+            handleTimeChange={handleTimeChange}
+            isLoading={isLoading}
+            availableHoursError={availableHoursError}
+          />
         </div>
       </div>
     </form>

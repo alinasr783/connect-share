@@ -4,11 +4,6 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      http-equiv="Cache-Control"
-      content="no-cache, no-store, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
     <title>Connect Share - Find Your Perfect Clinic Space</title>
     <meta
       name="description"
@@ -21,57 +16,13 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Connect Share" />
     <link rel="apple-touch-icon" href="/images/icon-192x192.png" />
+
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/images/hero.png" as="image" />
+    <link rel="preload" href="/src/index.css" as="style" />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-
-    <!-- Aggressive service worker cleanup -->
-    <script>
-      // Clear all caches and unregister service workers immediately
-      (function () {
-        console.log("Starting aggressive cleanup...");
-
-        // Clear all caches
-        if ("caches" in window) {
-          caches.keys().then(function (names) {
-            console.log("Found caches:", names);
-            for (let name of names) {
-              caches.delete(name).then(() => {
-                console.log("Deleted cache:", name);
-              });
-            }
-          });
-        }
-
-        // Unregister all service workers
-        if ("serviceWorker" in navigator) {
-          navigator.serviceWorker
-            .getRegistrations()
-            .then(function (registrations) {
-              console.log("Found service workers:", registrations.length);
-              for (let registration of registrations) {
-                registration.unregister().then(() => {
-                  console.log(
-                    "Unregistered service worker:",
-                    registration.scope
-                  );
-                });
-              }
-            });
-        }
-
-        // Force reload if service worker is still active
-        setTimeout(() => {
-          if (
-            "serviceWorker" in navigator &&
-            navigator.serviceWorker.controller
-          ) {
-            console.log("Service worker still active, reloading page...");
-            window.location.reload(true);
-          }
-        }, 1000);
-      })();
-    </script>
   </body>
 </html>

@@ -7,8 +7,13 @@ import DoctorAppLayout from "./features/Dashboard/DoctorAppLayout";
 import ProviderAppLayout from "./features/Dashboard/ProviderAppLayout";
 import ProviderDashboard from "./features/Dashboard/ProviderDashboard";
 import Dashboard from "./pages/Dashboard";
+import DoctorBookings from "./pages/DoctorBookings";
+import DoctorFindClinics from "./pages/DoctorFindClinics";
+import DoctorSupport from "./pages/DoctorSupport";
+import FindClinic from "./pages/FindClinic";
 import Login from "./pages/Login";
 import ProviderClinics from "./pages/ProviderClinics";
+import ProviderPayments from "./pages/ProviderPayments";
 import ProviderRentals from "./pages/ProviderRentals";
 import {default as ProviderSettings} from "./pages/ProviderSettings";
 import Signup from "./pages/Signup";
@@ -16,10 +21,6 @@ import Home from "./ui/Home/Home";
 import NotFound from "./ui/NotFound";
 import ProtectedRoutes from "./ui/ProtectedRoutes";
 import RoleProtectedRoute from "./ui/RoleProtectedRoute";
-import ProviderPayments from "./pages/ProviderPayments";
-import DoctorFindClinics from "./pages/DoctorFindClinics";
-import FindClinic from "./pages/FindClinic";
-import DoctorSupport from "./pages/DoctorSupport";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -73,7 +74,7 @@ function AuthWrapper() {
             <Route index element={<Navigate to="clinics" />} />
             <Route path="clinics" element={<DoctorFindClinics />} />
             <Route path="clinics/:id" element={<FindClinic />} />
-            <Route path="rentals" element={<ProviderRentals />} />
+            <Route path="bookings" element={<DoctorBookings />} />
             <Route path="payments" element={<ProviderPayments />} />
             <Route path="settings" element={<ProviderSettings />} />
             <Route path="support" element={<DoctorSupport />} />

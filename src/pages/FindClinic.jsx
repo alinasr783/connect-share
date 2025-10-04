@@ -35,8 +35,49 @@ function FindClinic() {
     from: null,
     to: null,
   });
+  const [selectedStartTime, setSelectedStartTime] = useState("");
+  const [selectedEndTime, setSelectedEndTime] = useState("");
 
   const {rentals: isBooked, isLoadingRentals} = useCheckIfBooked(clinic?.id);
+
+  // Handle time input changes
+  const handleStartTimeChange = (e) => {
+    const selectedTime = e.target.value;
+    if (availableHours) {
+      // Ensure selected time is within available range
+      if (
+        selectedTime >= availableHours.startTime &&
+        selectedTime <= availableHours.endTime
+      ) {
+        setSelectedStartTime(selectedTime);
+        // If end time is before new start time, clear it
+        if (selectedEndTime && selectedTime >= selectedEndTime) {
+          setSelectedEndTime("");
+        }
+      }
+    } else {
+      setSelectedStartTime(selectedTime);
+    }
+  };
+
+  const handleEndTimeChange = (e) => {
+    const selectedTime = e.target.value;
+    if (availableHours) {
+      // Ensure selected time is within available range
+      if (
+        selectedTime >= availableHours.startTime &&
+        selectedTime <= availableHours.endTime
+      ) {
+        setSelectedEndTime(selectedTime);
+        // If start time is after new end time, clear it
+        if (selectedStartTime && selectedTime <= selectedStartTime) {
+          setSelectedStartTime("");
+        }
+      }
+    } else {
+      setSelectedEndTime(selectedTime);
+    }
+  };
 
   if (isLoadingClinic || isLoadingRentals) return <Spinner />;
 
@@ -55,6 +96,7 @@ function FindClinic() {
     images,
     created_at,
     availableDate,
+    availableHours,
     features,
     district,
     mapLink,
@@ -62,9 +104,19 @@ function FindClinic() {
     pricing,
   } = clinic;
 
+  console.log(availableHours);
+
   const handleBookClick = () => {
     if (!selectedDateRange.from || !selectedDateRange.to) {
       alert("Please select a date range first");
+      return;
+    }
+    if (!selectedStartTime || !selectedEndTime) {
+      alert("Please select start and end times");
+      return;
+    }
+    if (selectedStartTime >= selectedEndTime) {
+      alert("End time must be after start time");
       return;
     }
     setShowConfirm(true);
@@ -90,12 +142,18 @@ function FindClinic() {
         from: selectedDateRange.from.toISOString().split("T")[0],
         to: selectedDateRange.to.toISOString().split("T")[0],
       },
+      selected_hours: {
+        startTime: selectedStartTime,
+        endTime: selectedEndTime,
+      },
     };
 
     createRental(newRental, {
       onSuccess: () => {
         setShowConfirm(false);
         setSelectedDateRange({from: null, to: null});
+        setSelectedStartTime("");
+        setSelectedEndTime("");
       },
       onError: (error) => {
         console.error("Error creating rental:", error);
@@ -265,6 +323,83 @@ function FindClinic() {
                     </div>
                   </div>
 
+                  {/* Time Selection */}
+                  {availableHours && (
+                    <div className="bg-white rounded-xl p-4 mb-4">
+                      <div className="text-center mb-3">
+                        <h4 className="font-semibold text-gray-700">
+                          Select Time Range
+                        </h4>
+                        <p className="text-sm text-gray-500">
+                          Choose your preferred time range (Available:{" "}
+                          {availableHours.startTime} - {availableHours.endTime})
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-600 mb-2">
+                            Start Time
+                          </label>
+                          <input
+                            type="time"
+                            value={selectedStartTime}
+                            onChange={handleStartTimeChange}
+                            min={availableHours.startTime}
+                            max={availableHours.endTime}
+                            step="1800"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            style={{
+                              colorScheme: "light",
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-600 mb-2">
+                            End Time
+                          </label>
+                          <input
+                            type="time"
+                            value={selectedEndTime}
+                            onChange={handleEndTimeChange}
+                            min={availableHours.startTime}
+                            max={availableHours.endTime}
+                            step="1800"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            style={{
+                              colorScheme: "light",
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {selectedStartTime && selectedEndTime && (
+                        <div className="mt-4 p-3 bg-green-50 rounded-md">
+                          <p className="text-sm text-green-800 font-medium">
+                            Selected Time Range:
+                          </p>
+                          <p className="text-sm text-green-600 mt-1">
+                            {selectedStartTime} - {selectedEndTime}
+                          </p>
+                        </div>
+                      )}
+
+                      {(!selectedStartTime || !selectedEndTime) && (
+                        <p className="text-red-500 text-xs text-center mt-2">
+                          Please select both start and end times to continue
+                        </p>
+                      )}
+
+                      <div className="mt-3 p-2 bg-blue-50 rounded-md">
+                        <p className="text-xs text-blue-700 text-center">
+                          <i className="ri-information-line mr-1"></i>
+                          Only times between {availableHours.startTime} and{" "}
+                          {availableHours.endTime} are available for booking
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   <Button
                     type="primary"
                     size="large"
@@ -273,6 +408,8 @@ function FindClinic() {
                       isCreatingRental ||
                       !selectedDateRange?.from ||
                       !selectedDateRange?.to ||
+                      (availableHours &&
+                        (!selectedStartTime || !selectedEndTime)) ||
                       isBooked
                     }
                     onClick={handleBookClick}>
