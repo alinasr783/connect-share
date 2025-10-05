@@ -1,5 +1,5 @@
 import {Outlet} from "react-router-dom";
-import Sidebar from "../../ui/Provider/Sidebar";
+import Sidebar from "../../ui/Sidebar";
 
 function DoctorAppLayout() {
   const links = [

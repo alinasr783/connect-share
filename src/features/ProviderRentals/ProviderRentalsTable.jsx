@@ -1,23 +1,15 @@
-import {useState} from "react";
 import Spinner from "../../ui/Spinner";
 import Table from "../../ui/Table";
-import useProviderRentals from "./useProviderRentals";
 import ProviderRentalsRow from "./ProviderRentalsRow";
-import ProviderRentalsOperations from "./ProviderRentalsOperations";
+import useProviderRentals from "./useProviderRentals";
 
 function ProviderRentalsTable() {
   const {rentals, isLoadingRentals} = useProviderRentals();
-  const [filteredRentals, setFilteredRentals] = useState([]);
 
   if (isLoadingRentals) return <Spinner />;
 
   return (
     <div className="space-y-4">
-      <ProviderRentalsOperations
-        rentals={rentals}
-        onFilteredRentalsChange={setFilteredRentals}
-      />
-
       <Table>
         <Table.Header>
           <Table.Row>
@@ -29,8 +21,8 @@ function ProviderRentalsTable() {
           </Table.Row>
         </Table.Header>
         <Table.Body>
-          {filteredRentals && filteredRentals.length > 0 ? (
-            filteredRentals.map((rental) => (
+          {rentals && rentals.length > 0 ? (
+            rentals.map((rental) => (
               <ProviderRentalsRow key={rental.id} rental={rental} />
             ))
           ) : (

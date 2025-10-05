@@ -8,7 +8,7 @@ function StatusBadge({status, className = ""}) {
       case "completed":
         return "bg-green-100 text-green-800";
       case "pending":
-        return "bg-orange-100 text-orange-800";
+        return "bg-yellow-100 text-yellow-800";
       case "cancelled":
         return "bg-red-100 text-red-800";
       case "available":
@@ -16,6 +16,10 @@ function StatusBadge({status, className = ""}) {
       case "busy":
         return "bg-yellow-100 text-yellow-800";
       case "unavailable":
+        return "bg-red-100 text-red-800";
+      case "paid":
+        return "bg-green-100 text-green-800";
+      case "refunded":
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";

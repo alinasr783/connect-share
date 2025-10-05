@@ -1,4 +1,5 @@
 import {useState} from "react";
+import {useSearchParams} from "react-router-dom";
 
 function Filter({
   options = [],
@@ -6,17 +7,37 @@ function Filter({
   onChange,
   placeholder = "All",
   className = "",
+  urlParam = null,
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const currentValue = urlParam ? searchParams.get(urlParam) || "" : value;
 
   const handleOptionClick = (option) => {
-    onChange?.(option);
+    if (urlParam) {
+      const newSearchParams = new URLSearchParams(searchParams);
+      if (option && option !== "All") {
+        newSearchParams.set(urlParam, option);
+      } else {
+        newSearchParams.delete(urlParam);
+      }
+      setSearchParams(newSearchParams);
+    } else {
+      onChange?.(option);
+    }
     setIsOpen(false);
   };
 
   const handleClear = (e) => {
     e.stopPropagation();
-    onChange?.("");
+    if (urlParam) {
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete(urlParam);
+      setSearchParams(newSearchParams);
+    } else {
+      onChange?.("");
+    }
   };
 
   return (
@@ -25,18 +46,21 @@ function Filter({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="w-full px-4 py-2 pr-8 border border-gray-300 rounded-lg 
-          focus:ring-2 focus:ring-blue-500 focus:border-transparent 
+          focus:ring-2 focus:ring-primary focus:border-transparent 
           bg-white text-left flex items-center justify-between">
-        <span className={value ? "text-gray-900" : "text-gray-500"}>
-          {value || placeholder}
+        <span
+          className={
+            currentValue ? "text-gray-900 font-medium" : "text-gray-500"
+          }>
+          {currentValue || placeholder}
         </span>
         <div className="flex items-center gap-2">
-          {value && (
-            <button
+          {currentValue && (
+            <span
               onClick={handleClear}
-              className="text-gray-400 hover:text-gray-600">
+              className="text-gray-400 hover:text-gray-600 cursor-pointer">
               <i className="ri-close-line"></i>
-            </button>
+            </span>
           )}
           <i
             className={`ri-arrow-down-s-line transition-transform ${
@@ -56,13 +80,13 @@ function Filter({
                 onClick={() => handleOptionClick(option)}
                 className={`w-full px-4 py-2 text-left hover:bg-gray-50 flex 
                         items-center justify-between ${
-                          value === option
-                            ? "bg-blue-50 text-blue-700"
+                          currentValue === option
+                            ? "bg-blue-50 text-primary"
                             : "text-gray-900"
                         }`}>
                 <span className="capitalize">{option}</span>
-                {value === option && (
-                  <i className="ri-check-line text-blue-600"></i>
+                {currentValue === option && (
+                  <i className="ri-check-line text-primary"></i>
                 )}
               </button>
             ))}

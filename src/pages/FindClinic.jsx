@@ -2,6 +2,7 @@ import {useState} from "react";
 import {DayPicker} from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import useUser from "../features/auth/useUser";
+import RenderPricing from "../features/doctorFindClinics/RenderPricing";
 import useCheckIfBooked from "../features/doctorFindClinics/useCheckIfBooked";
 import useCreateRental from "../features/doctorFindClinics/useCreactRental";
 import useFindClinic from "../features/doctorFindClinics/useFindClinic";
@@ -11,20 +12,7 @@ import Empty from "../ui/Empty";
 import ImagesSlider from "../ui/ImagesSlider";
 import Spinner from "../ui/Spinner";
 import StatusBadge from "../ui/StatusBadge";
-import {formatCurrency, formatDate} from "../utils/helpers";
-
-function RenderPricing({pricing, title}) {
-  return (
-    <div
-      className="flex justify-between items-center p-4 bg-gray-200/60 
-        rounded-2xl">
-      <span className="text-gray-700 text-base">{title}</span>
-      <span className="text-lg font-bold">
-        {formatCurrency(pricing.dailyRate || 0)}
-      </span>
-    </div>
-  );
-}
+import {formatDate} from "../utils/helpers";
 
 function FindClinic() {
   const {user} = useUser();
@@ -37,20 +25,19 @@ function FindClinic() {
   });
   const [selectedStartTime, setSelectedStartTime] = useState("");
   const [selectedEndTime, setSelectedEndTime] = useState("");
+  const [selectedPricing, setSelectedPricing] = useState("");
+  const [selectedPrice, setSelectedPrice] = useState(null);
 
   const {rentals: isBooked, isLoadingRentals} = useCheckIfBooked(clinic?.id);
 
-  // Handle time input changes
   const handleStartTimeChange = (e) => {
     const selectedTime = e.target.value;
     if (availableHours) {
-      // Ensure selected time is within available range
       if (
         selectedTime >= availableHours.startTime &&
         selectedTime <= availableHours.endTime
       ) {
         setSelectedStartTime(selectedTime);
-        // If end time is before new start time, clear it
         if (selectedEndTime && selectedTime >= selectedEndTime) {
           setSelectedEndTime("");
         }
@@ -104,7 +91,28 @@ function FindClinic() {
     pricing,
   } = clinic;
 
-  console.log(availableHours);
+  const handlePricingSelect = (pricingType) => {
+    setSelectedPricing(pricingType);
+
+    // Set the price amount based on the selected pricing type
+    let priceAmount = null;
+    if (pricing) {
+      switch (pricingType) {
+        case "Hourly Rate":
+          priceAmount = pricing.hourlyRate || 0;
+          break;
+        case "Daily Rate":
+          priceAmount = pricing.dailyRate || 0;
+          break;
+        case "Monthly Rate":
+          priceAmount = pricing.monthlyRate || 0;
+          break;
+        default:
+          priceAmount = null;
+      }
+    }
+    setSelectedPrice(priceAmount);
+  };
 
   const handleBookClick = () => {
     if (!selectedDateRange.from || !selectedDateRange.to) {
@@ -117,6 +125,10 @@ function FindClinic() {
     }
     if (selectedStartTime >= selectedEndTime) {
       alert("End time must be after start time");
+      return;
+    }
+    if (pricing?.pricingModel === "standard" && !selectedPricing) {
+      alert("Please select a pricing option");
       return;
     }
     setShowConfirm(true);
@@ -138,6 +150,7 @@ function FindClinic() {
       docId: user.id,
       provId: clinic.userId,
       status: "pending",
+      price: selectedPrice,
       selected_date: {
         from: selectedDateRange.from.toISOString().split("T")[0],
         to: selectedDateRange.to.toISOString().split("T")[0],
@@ -146,6 +159,8 @@ function FindClinic() {
         startTime: selectedStartTime,
         endTime: selectedEndTime,
       },
+      selected_pricing:
+        pricing?.pricingModel === "standard" ? selectedPricing : null,
     };
 
     createRental(newRental, {
@@ -154,6 +169,8 @@ function FindClinic() {
         setSelectedDateRange({from: null, to: null});
         setSelectedStartTime("");
         setSelectedEndTime("");
+        setSelectedPricing("");
+        setSelectedPrice(null);
       },
       onError: (error) => {
         console.error("Error creating rental:", error);
@@ -167,11 +184,9 @@ function FindClinic() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Main Image Hero with Slider */}
       <div className="relative h-[70vh] group">
         <ImagesSlider images={images} className="h-full" />
 
-        {/* Clinic Info Overlay */}
         <div className="absolute bottom-6 left-6 right-6 text-white z-10">
           <div className="flex items-center justify-between">
             <div>
@@ -365,7 +380,8 @@ function FindClinic() {
                             min={availableHours.startTime}
                             max={availableHours.endTime}
                             step="1800"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 
+                              focus:ring-green-500 focus:border-transparent"
                             style={{
                               colorScheme: "light",
                             }}
@@ -390,7 +406,7 @@ function FindClinic() {
                         </p>
                       )}
 
-                      <div className="mt-3 p-2 bg-blue-50 rounded-md">
+                      <div className="mt-3 p-2 bg-primary/10 rounded-md">
                         <p className="text-xs text-blue-700 text-center">
                           <i className="ri-information-line mr-1"></i>
                           Only times between {availableHours.startTime} and{" "}
@@ -410,6 +426,8 @@ function FindClinic() {
                       !selectedDateRange?.to ||
                       (availableHours &&
                         (!selectedStartTime || !selectedEndTime)) ||
+                      (pricing?.pricingModel === "standard" &&
+                        !selectedPricing) ||
                       isBooked
                     }
                     onClick={handleBookClick}>
@@ -436,14 +454,32 @@ function FindClinic() {
                   {pricing?.pricingModel === "standard" ? (
                     <div className="space-y-4">
                       {pricing.hourlyEnabled && (
-                        <RenderPricing pricing={pricing} title="Hourly Rate" />
+                        <RenderPricing
+                          pricing={pricing}
+                          title="Hourly Rate"
+                          isSelectable={true}
+                          isSelected={selectedPricing === "Hourly Rate"}
+                          onSelect={handlePricingSelect}
+                        />
                       )}
 
                       {pricing.dailyEnabled && (
-                        <RenderPricing pricing={pricing} title="Daily Rate" />
+                        <RenderPricing
+                          pricing={pricing}
+                          title="Daily Rate"
+                          isSelectable={true}
+                          isSelected={selectedPricing === "Daily Rate"}
+                          onSelect={handlePricingSelect}
+                        />
                       )}
                       {pricing.monthlyEnabled && (
-                        <RenderPricing pricing={pricing} title="Monthly Rate" />
+                        <RenderPricing
+                          pricing={pricing}
+                          title="Monthly Rate"
+                          isSelectable={true}
+                          isSelected={selectedPricing === "Monthly Rate"}
+                          onSelect={handlePricingSelect}
+                        />
                       )}
                     </div>
                   ) : (

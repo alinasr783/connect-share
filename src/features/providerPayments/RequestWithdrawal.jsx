@@ -4,19 +4,8 @@ import {formatCurrency} from "../../utils/helpers";
 import Button from "../../ui/Button";
 
 function RequestWithdrawal() {
-  const {outstandingBalance} = useEarnings();
   const [amount, setAmount] = useState(0);
   const [withdrawalMethod, setWithdrawalMethod] = useState("bank");
-
-  const handleWithdraw = () => {
-    if (amount > 0 && amount <= outstandingBalance) {
-      // Handle withdrawal logic here
-      console.log("Withdrawing:", amount);
-      alert(`Withdrawal request for $${amount} submitted successfully!`);
-    } else {
-      alert("Please enter a valid amount within your available balance.");
-    }
-  };
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-xs">
@@ -29,7 +18,7 @@ function RequestWithdrawal() {
         <div className="bg-gray-50 p-4 rounded-lg">
           <p className="text-sm text-gray-600 mb-1">Available for withdrawal</p>
           <p className="text-2xl font-bold text-gray-900">
-            {formatCurrency(outstandingBalance)}
+            {/* {formatCurrency(outstandingBalance)} */}
           </p>
         </div>
 
@@ -51,7 +40,7 @@ function RequestWithdrawal() {
                 focus:border-transparent"
               placeholder="0.00"
               min="0"
-              max={outstandingBalance}
+              // max={outstandingBalance}
             />
           </div>
         </div>
@@ -74,7 +63,7 @@ function RequestWithdrawal() {
 
         {/* Withdraw Button */}
         <Button
-          onClick={handleWithdraw}
+          // onClick={handleWithdraw}
           type="primary"
           size="medium"
           className="w-full">

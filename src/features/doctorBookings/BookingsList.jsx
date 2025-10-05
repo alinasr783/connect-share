@@ -7,10 +7,8 @@ function BookingsList() {
 
   if (isLoadingBookings) return <Spinner />;
 
-  console.log(bookings);
-
   return (
-    <div>
+    <div className="space-y-4">
       {bookings.map((booking) => (
         <BookingItem key={booking.id} booking={booking} />
       ))}

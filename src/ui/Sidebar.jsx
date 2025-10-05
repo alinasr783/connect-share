@@ -1,5 +1,5 @@
-import MainNav from "../MainNav";
-import User from "../User";
+import MainNav from "./MainNav";
+import User from "./User";
 
 function Sidebar({links}) {
   return (

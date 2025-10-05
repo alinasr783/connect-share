@@ -23,7 +23,7 @@ function Pagination({count}) {
     `;
 
   const activeButtonStyle = `
-      cursor-pointer bg-blue-500 text-white py-2 px-3 rounded-full
+      cursor-pointer bg-primary text-white py-2 px-3 rounded-full
     `;
 
   const pageButtonStyle = `

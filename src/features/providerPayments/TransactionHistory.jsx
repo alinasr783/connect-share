@@ -81,20 +81,9 @@ function TransactionHistory() {
               placeholder="Search transactions..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="input-icon"
+              className="input-icon "
             />
           </div>
-
-          {/* Clinic Filter */}
-          {/* <select
-            value={selectedClinic}
-            onChange={(e) => setSelectedClinic(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-            <option value="all">All Clinics</option>
-            <option value="City Health">City Health</option>
-            <option value="Downtown Medical">Downtown Medical</option>
-            <option value="Metro Clinic">Metro Clinic</option>
-          </select> */}
 
           {/* Date Filter */}
           <div className="relative">

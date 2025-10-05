@@ -8,7 +8,7 @@ function DoctorFindClinics() {
     <>
       <Row type="col">
         <Heading as="h1">Clinics</Heading>
-        {/* <FindClinicsOperations /> */}
+        <FindClinicsOperations />
       </Row>
 
       <Row type="col">

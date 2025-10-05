@@ -3,7 +3,7 @@ import supabase from "./supabase";
 export async function getDoctorBookings(userId) {
     const { data, error } = await supabase
         .from("rentals")
-        .select("*")
+        .select("*, clinicId(name)")
         .eq("docId", userId)
 
     if (error) {
@@ -12,4 +12,16 @@ export async function getDoctorBookings(userId) {
     }
 
     return data;
+}
+
+export async function updateBooking({ id, updateData }) {
+    const { error } = await supabase
+        .from("rentals")
+        .update(updateData)
+        .eq("id", id);
+
+    if (error) {
+        console.error(error);
+        throw new Error("Error updating booking");
+    }
 }

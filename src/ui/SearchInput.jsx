@@ -5,7 +5,7 @@ function SearchInput({
   className = "",
 }) {
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative ${className} bg-white rounded-lg`}>
       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
         <i className="ri-search-line text-gray-400"></i>
       </div>

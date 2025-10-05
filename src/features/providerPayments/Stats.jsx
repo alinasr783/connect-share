@@ -1,15 +1,6 @@
 import Stat from "./Stat";
-import useEarnings from "./useEarnings";
-import Spinner from "../../ui/Spinner";
 
-function Stats() {
-  const {totalEarnings, totalPayouts, outstandingBalance, isLoadingRentals} =
-    useEarnings();
-
-  if (isLoadingRentals) {
-    return <Spinner />;
-  }
-
+function Stats({totalEarnings, totalPayouts, outstandingBalance}) {
   return (
     <>
       <Stat

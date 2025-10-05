@@ -117,18 +117,26 @@ export async function CreateUpdateClinic(clinicData, id) {
 }
 
 // Find clinics
-export async function getFindClinics({ page }) {
+export async function getFindClinics({ page, filters = [] }) {
     const query = supabase
         .from('clinics')
-        .select('id, name, address, images, pricing',
+        .select('id, name, address, images, pricing, pricingModel, specialty',
             { count: 'exact' })
         .order('created_at', { ascending: false });
 
+    // pagination
     if (page) {
         const from = (page - 1) * PAGE_SIZE;
         const to = page * PAGE_SIZE - 1;
         query.range(from, to);
     }
+
+    // filters
+    filters.forEach(filter => {
+        if (filter && filter.field && filter.value) {
+            query.eq(filter.field, filter.value);
+        }
+    });
 
     const { data, error, count } = await query;
 
