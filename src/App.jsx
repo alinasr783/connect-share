@@ -5,7 +5,7 @@ import {BrowserRouter, Navigate, Route, Routes} from "react-router-dom";
 import useAuthListener from "./features/auth/useAuthListener";
 import DoctorAppLayout from "./features/Dashboard/DoctorAppLayout";
 import ProviderAppLayout from "./features/Dashboard/ProviderAppLayout";
-import ProviderDashboard from "./features/Dashboard/ProviderDashboard";
+import ProviderDashboard from "./features/providerDashboard/ProviderDashboard";
 import Dashboard from "./pages/Dashboard";
 import DoctorBookings from "./pages/DoctorBookings";
 import DoctorFindClinics from "./pages/DoctorFindClinics";
