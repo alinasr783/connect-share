@@ -19,10 +19,7 @@ function FindClinic() {
   const {clinic, isLoadingClinic} = useFindClinic();
   const {createRental, isCreatingRental} = useCreateRental();
   const [showConfirm, setShowConfirm] = useState(false);
-  const [selectedDateRange, setSelectedDateRange] = useState({
-    from: null,
-    to: null,
-  });
+  const [selectedDays, setSelectedDays] = useState([]);
   const [selectedStartTime, setSelectedStartTime] = useState("");
   const [selectedEndTime, setSelectedEndTime] = useState("");
   const [selectedPricing, setSelectedPricing] = useState("");
@@ -94,7 +91,6 @@ function FindClinic() {
   const handlePricingSelect = (pricingType) => {
     setSelectedPricing(pricingType);
 
-    // Set the price amount based on the selected pricing type
     let priceAmount = null;
     if (pricing) {
       switch (pricingType) {
@@ -115,8 +111,8 @@ function FindClinic() {
   };
 
   const handleBookClick = () => {
-    if (!selectedDateRange.from || !selectedDateRange.to) {
-      alert("Please select a date range first");
+    if (!selectedDays.length) {
+      alert("Please select at least one available day");
       return;
     }
     if (!selectedStartTime || !selectedEndTime) {
@@ -135,13 +131,8 @@ function FindClinic() {
   };
 
   const handleConfirm = () => {
-    if (
-      !selectedDateRange.from ||
-      !selectedDateRange.to ||
-      isNaN(selectedDateRange.from.getTime()) ||
-      isNaN(selectedDateRange.to.getTime())
-    ) {
-      alert("Please select a valid date range");
+    if (!selectedDays.length) {
+      alert("Please select at least one available day");
       return;
     }
 
@@ -152,8 +143,7 @@ function FindClinic() {
       status: "pending",
       price: selectedPrice,
       selected_date: {
-        from: selectedDateRange.from.toISOString().split("T")[0],
-        to: selectedDateRange.to.toISOString().split("T")[0],
+        days: selectedDays.map((d) => d.toISOString().split("T")[0]),
       },
       selected_hours: {
         startTime: selectedStartTime,
@@ -166,7 +156,7 @@ function FindClinic() {
     createRental(newRental, {
       onSuccess: () => {
         setShowConfirm(false);
-        setSelectedDateRange({from: null, to: null});
+        setSelectedDays([]);
         setSelectedStartTime("");
         setSelectedEndTime("");
         setSelectedPricing("");
@@ -248,11 +238,18 @@ function FindClinic() {
                     <div>
                       <div className="text-center mb-3">
                         <h4 className="font-semibold text-gray-700">
-                          Select Date Range
+                          Select Available Days
                         </h4>
                         <p className="text-sm text-gray-500">
                           Choose your preferred date range from available dates
                         </p>
+                        {availableDate?.days &&
+                          availableDate.days.length > 0 && (
+                            <p className="text-xs text-green-600 mt-1">
+                              Available on {availableDate.days.length} selected
+                              day(s)
+                            </p>
+                          )}
                         {availableDate &&
                           availableDate.from &&
                           availableDate.to && (
@@ -267,10 +264,33 @@ function FindClinic() {
                       <div className="space-y-3 p-3">
                         <div className="flex justify-center">
                           <DayPicker
-                            mode="range"
-                            selected={selectedDateRange}
-                            onSelect={setSelectedDateRange}
+                            mode="multiple"
+                            selected={selectedDays}
+                            onSelect={(days) =>
+                              setSelectedDays(Array.isArray(days) ? days : [])
+                            }
+                            modifiers={{
+                              available: (date) => {
+                                const d = date.toISOString().split("T")[0];
+                                return (
+                                  Array.isArray(availableDate?.days) &&
+                                  availableDate.days.includes(d)
+                                );
+                              },
+                            }}
                             disabled={(date) => {
+                              // If using new availableDate.days system
+                              if (
+                                availableDate?.days &&
+                                availableDate.days.length > 0
+                              ) {
+                                const dateStr = date
+                                  .toISOString()
+                                  .split("T")[0];
+                                return !availableDate.days.includes(dateStr);
+                              }
+
+                              // Fallback to old availableDate system
                               if (
                                 !availableDate ||
                                 !availableDate.from ||
@@ -299,39 +319,27 @@ function FindClinic() {
                           />
                         </div>
 
-                        {(selectedDateRange?.from || selectedDateRange?.to) && (
+                        {selectedDays.length > 0 ? (
                           <div className="flex justify-between items-center">
                             <div className="text-sm text-gray-600">
-                              <span className="font-medium">Selected:</span>{" "}
-                              {selectedDateRange?.from && (
-                                <span>
-                                  From: {formatDate(selectedDateRange.from)}
+                              <span className="font-medium">
+                                Selected days:
+                              </span>{" "}
+                              {selectedDays.map((d, i) => (
+                                <span key={i} className="ml-1">
+                                  {formatDate(d)}
                                 </span>
-                              )}
-                              {selectedDateRange?.from &&
-                                selectedDateRange?.to && <span> - </span>}
-                              {selectedDateRange?.to && (
-                                <span>
-                                  To: {formatDate(selectedDateRange.to)}
-                                </span>
-                              )}
+                              ))}
                             </div>
                             <button
-                              className="text-sm bg-gray-800 hover:bg-gray-900 
-                                text-white font-semibold 
-                                p-2 rounded-lg cursor-pointer"
-                              onClick={() =>
-                                setSelectedDateRange({from: null, to: null})
-                              }>
+                              className="text-sm bg-gray-800 hover:bg-gray-900 text-white font-semibold p-2 rounded-lg cursor-pointer"
+                              onClick={() => setSelectedDays([])}>
                               Reset
                             </button>
                           </div>
-                        )}
-
-                        {(!selectedDateRange?.from ||
-                          !selectedDateRange?.to) && (
+                        ) : (
                           <p className="text-red-500 text-xs text-center">
-                            Please select both start and end dates to continue
+                            Select at least one day to continue
                           </p>
                         )}
                       </div>
@@ -422,8 +430,7 @@ function FindClinic() {
                     className="w-full"
                     disabled={
                       isCreatingRental ||
-                      !selectedDateRange?.from ||
-                      !selectedDateRange?.to ||
+                      selectedDays.length === 0 ||
                       (availableHours &&
                         (!selectedStartTime || !selectedEndTime)) ||
                       (pricing?.pricingModel === "standard" &&

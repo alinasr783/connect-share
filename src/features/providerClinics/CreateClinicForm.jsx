@@ -29,17 +29,13 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
       : {},
   });
 
-  const [availableDateRange, setAvailableDateRange] = useState(
-    isEditSession
-      ? {
-          from: new Date(clinicToEdit.availableDate?.from),
-          to: new Date(clinicToEdit.availableDate?.to),
-        }
-      : undefined
+  const [selectedDays, setSelectedDays] = useState(
+    isEditSession && clinicToEdit.availableDate?.days
+      ? clinicToEdit.availableDate.days.map((day) => new Date(day))
+      : []
   );
-  const [availableDateRangeError, setAvailableDateRangeError] = useState(null);
+  const [availableDaysError, setAvailableDaysError] = useState(null);
 
-  // Available hours state management
   const [availableHours, setAvailableHours] = useState(
     isEditSession && clinicToEdit.availableHours
       ? {
@@ -55,16 +51,13 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
   );
   const [availableHoursError, setAvailableHoursError] = useState(null);
 
-  // Features state management
   const [features, setFeatures] = useState(
     isEditSession && clinicToEdit.features ? clinicToEdit.features : []
   );
   const [newFeature, setNewFeature] = useState("");
 
-  // Images state management
   const [images, setImages] = useState(() => {
     if (isEditSession && clinicToEdit.images) {
-      // If editing and images exist, they are URLs from the database
       return clinicToEdit.images;
     }
     return [];
@@ -72,7 +65,6 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
 
-  // Pricing state management
   const [pricingModel, setPricingModel] = useState(() => {
     if (isEditSession && clinicToEdit.pricing) {
       return clinicToEdit.pricing.pricingModel || "standard";
@@ -126,14 +118,12 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
 
   const isLoading = isCreatingClinic || isUpdatingClinic || isUploadingImages;
 
-  const handleAvailableDateRangeSelect = (selectedRange) => {
-    setAvailableDateRange(selectedRange);
-    if (selectedRange?.from) {
-      setAvailableDateRangeError(null);
-    }
+  const handleDaySelect = (days) => {
+    // react-day-picker (mode="multiple") passes an array of Date or undefined
+    setAvailableDaysError(null);
+    setSelectedDays(Array.isArray(days) ? days : []);
   };
 
-  // Time validation function
   const validateTimeRange = (startTime, endTime) => {
     if (!startTime || !endTime) {
       return "Both start and end times are required";
@@ -157,7 +147,6 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
 
     setAvailableHours(newAvailableHours);
 
-    // Validate the time range only for startTime and endTime
     if (field === "startTime" || field === "endTime") {
       const error = validateTimeRange(
         newAvailableHours.startTime,
@@ -167,7 +156,6 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
     }
   };
 
-  // Feature management functions
   const addFeature = () => {
     if (newFeature.trim() && !features.includes(newFeature.trim())) {
       setFeatures([...features, newFeature.trim()]);
@@ -186,11 +174,10 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
     }
   };
 
-  // Image handling functions
   const handleImageUpload = (files) => {
     const fileArray = Array.from(files);
     const validFiles = fileArray.filter(
-      (file) => file.type.startsWith("image/") && file.size <= 5 * 1024 * 1024 // 5MB limit
+      (file) => file.type.startsWith("image/") && file.size <= 5 * 1024 * 1024
     );
 
     validFiles.forEach((file) => {
@@ -211,11 +198,9 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
   const removeImage = (imageIdOrIndex) => {
     setImages(
       images.filter((img, index) => {
-        // For new images (with id), match by id
         if (img.id) {
           return img.id !== imageIdOrIndex;
         }
-        // For existing images (URLs), match by index
         return index !== imageIdOrIndex;
       })
     );
@@ -246,7 +231,6 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
     setPricingModel(model);
     if (model === "standard") {
       setPercentageEnabled(false);
-      // If in edit mode, restore the enabled states based on existing data
       if (isEditSession && clinicToEdit.pricing) {
         setHourlyEnabled(Boolean(clinicToEdit.pricing.hourlyRate));
         setDailyEnabled(Boolean(clinicToEdit.pricing.dailyRate));
@@ -261,12 +245,11 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
   };
 
   const onSubmit = async (data) => {
-    if (!availableDateRange || !availableDateRange.from) {
-      setAvailableDateRangeError("Please select a date range.");
+    if (selectedDays.length === 0) {
+      setAvailableDaysError("Please select at least one available day.");
       return;
     }
 
-    // Validate available hours
     const timeError = validateTimeRange(
       availableHours.startTime,
       availableHours.endTime
@@ -276,21 +259,17 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
       return;
     }
 
-    // Validate that start and end times are selected
     if (!availableHours.startTime || !availableHours.endTime) {
       setAvailableHoursError("Please select both start and end times");
       return;
     }
 
-    // Separate new images (with file property) from existing URLs
     const newImages = images.filter((img) => img.file);
 
-    // Set uploading state if there are new images to upload
     if (newImages.length > 0) {
       setIsUploadingImages(true);
     }
 
-    // Prepare pricing data based on selected model
     const pricingData = {
       pricingModel,
       ...(pricingModel === "standard" && {
@@ -311,7 +290,6 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
       }),
     };
 
-    // Remove pricing fields from main data object since they're now in pricing object
     const {
       hourlyRate: _hourlyRate,
       dailyRate: _dailyRate,
@@ -329,8 +307,7 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
       pricing: pricingData,
       images: newImages,
       availableDate: {
-        from: availableDateRange?.from.toISOString(),
-        to: availableDateRange?.to.toISOString(),
+        days: selectedDays.map((day) => day.toISOString().split("T")[0]),
       },
       availableHours: availableHours,
     };
@@ -364,9 +341,7 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
       onSubmit={handleSubmit(onSubmit)}
       className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <div className="">
-        {/* Left side*/}
         <div className="flex flex-col gap-6">
-          {/* first section */}
           <div className="flex flex-col gap-4 p-4 bg-white rounded-md">
             <h3 className="text-lg font-semibold text-gray-800">
               Clinic Details
@@ -820,19 +795,38 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
           <h3 className="text-xl font-semibold mb-4 text-gray-800">
             Availability
           </h3>
+          <p className="text-sm text-gray-600 mb-4 text-center">
+            Click on dates to select available days for rental
+          </p>
           <div className="flex items-center justify-center">
             <DayPicker
-              mode="range"
-              selected={availableDateRange}
+              mode="multiple"
+              selected={selectedDays}
               disabled={isLoading}
-              onSelect={handleAvailableDateRangeSelect}
+              onSelect={handleDaySelect}
+              styles={{
+                day_selected: {backgroundColor: "#13b6ec", color: "white"},
+              }}
             />
           </div>
-          {availableDateRangeError && (
-            <p className="text-red-500 mt-2">{availableDateRangeError}</p>
+          {availableDaysError && (
+            <p className="text-red-500 mt-2">{availableDaysError}</p>
+          )}
+          {selectedDays.length > 0 && (
+            <div className="mt-4 text-sm text-gray-600">
+              <p>Selected {selectedDays.length} day(s):</p>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {selectedDays.map((day, index) => (
+                  <span
+                    key={index}
+                    className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                    {day.toLocaleDateString()}
+                  </span>
+                ))}
+              </div>
+            </div>
           )}
 
-          {/* Available Hours Selection */}
           <AvailableHourse
             availableHours={availableHours}
             handleTimeChange={handleTimeChange}

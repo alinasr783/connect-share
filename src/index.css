@@ -209,6 +209,14 @@ body {
   color: white !important;
 }
 
+/* Available days highlight for booking calendar */
+.rdp-day_available:not(.rdp-day_selected):not(.rdp-day_disabled) {
+  background-color: #e6f7ff !important;
+  color: #0ea5e9 !important;
+  border: 1px solid #0ea5e9 !important;
+  border-radius: 8px !important;
+}
+
 .rdp-day_today {
   background-color: #f3f4f6;
   color: #374151;
