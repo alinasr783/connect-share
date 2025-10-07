@@ -25,13 +25,23 @@ function usePayouts() {
         }, 0);
     };
 
+    const calculateAllPayoutsAmount = () => {
+        if (!payouts || payouts.length === 0) return 0;
+        return payouts.reduce((total, payout) => {
+            const payoutAmount = payout.amount || 0;
+            return total + payoutAmount;
+        }, 0);
+    }
+
     const totalPayouts = calculateTotalPayouts();
+    const allPayoutsAmount = calculateAllPayoutsAmount();
 
     return {
         totalPayouts,
         isLoadingPayouts,
         confirmedPayouts,
-        allPayouts: payouts || []
+        allPayouts: payouts || [],
+        allPayoutsAmount
     };
 }
 

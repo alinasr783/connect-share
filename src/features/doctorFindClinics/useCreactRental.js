@@ -11,6 +11,7 @@ function useCreateRental() {
         onSuccess: () => {
             toast.success("Rental created successfully");
             queryClient.invalidateQueries({ queryKey: ["check-if-booked"] });
+            queryClient.invalidateQueries({ queryKey: ["doctor-bookings"] });
         },
         onError: () => {
             toast.error("Failed to create rental");

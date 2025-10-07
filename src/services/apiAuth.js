@@ -135,7 +135,7 @@ export async function getCurrentUser() {
     return session.session.user;
 }
 
-export async function updateCurrentUser({ fullName, phone, avatar, medicalLicenseNumber, specialty }) {
+export async function updateCurrentUser({ fullName, phone, avatar, medicalLicenseNumber, specialties }) {
     // Get current user to get the userId
     const { data: currentUser, error: userError } = await supabase.auth.getUser();
 
@@ -187,8 +187,8 @@ export async function updateCurrentUser({ fullName, phone, avatar, medicalLicens
     if (medicalLicenseNumber !== undefined) {
         updateData.medicalLicenseNumber = medicalLicenseNumber;
     }
-    if (specialty !== undefined) {
-        updateData.specialty = specialty;
+    if (specialties !== undefined) {
+        updateData.specialties = specialties;
     }
 
     const { data: authData, error: authError } = await supabase.auth.updateUser({
@@ -207,8 +207,8 @@ export async function updateCurrentUser({ fullName, phone, avatar, medicalLicens
     if (medicalLicenseNumber !== undefined) {
         usersTableUpdateData.medicalLicenseNumber = medicalLicenseNumber;
     }
-    if (specialty !== undefined) {
-        usersTableUpdateData.specialty = specialty;
+    if (specialties !== undefined) {
+        usersTableUpdateData.specialties = specialties;
     }
 
     const { error: usersTableError } = await supabase

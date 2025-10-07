@@ -32,10 +32,7 @@ function Start() {
           ) : (
             <>
               <Button type="primary" size="large" to="/signup">
-                Get Started
-              </Button>
-              <Button type="secondary" size="large" to="/login">
-                Sign In
+                Sign Up
               </Button>
             </>
           )}

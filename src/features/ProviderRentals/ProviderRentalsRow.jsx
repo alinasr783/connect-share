@@ -8,6 +8,7 @@ function ProviderRentalsRow({rental}) {
     status,
     clinicId: {name},
     docId: {fullName},
+    price,
   } = rental;
 
   return (
@@ -21,6 +22,7 @@ function ProviderRentalsRow({rental}) {
       <Table.Cell>
         <StatusBadge status={status} />
       </Table.Cell>
+      <Table.Cell>{price || "N/A"}</Table.Cell>
     </Table.Row>
   );
 }

@@ -1,10 +1,12 @@
 import Spinner from "../../ui/Spinner";
 import Table from "../../ui/Table";
+import TablePagination from "../../ui/TablePagination";
 import ProviderRentalsRow from "./ProviderRentalsRow";
 import useProviderRentals from "./useProviderRentals";
+import {RENTALS_PAGE_SIZE} from "../../constant/const";
 
 function ProviderRentalsTable() {
-  const {rentals, isLoadingRentals} = useProviderRentals();
+  const {rentals, totalCount, isLoadingRentals} = useProviderRentals();
 
   if (isLoadingRentals) return <Spinner />;
 
@@ -18,6 +20,7 @@ function ProviderRentalsTable() {
             <Table.Head>TIME</Table.Head>
             <Table.Head>TENANT</Table.Head>
             <Table.Head>STATUS</Table.Head>
+            <Table.Head>AMOUNT</Table.Head>
           </Table.Row>
         </Table.Header>
         <Table.Body>
@@ -30,6 +33,27 @@ function ProviderRentalsTable() {
           )}
         </Table.Body>
       </Table>
+
+      <TablePagination
+        totalCount={totalCount}
+        pageSize={RENTALS_PAGE_SIZE}
+        className="mt-6">
+        {({currentPage, pageCount, totalCount, pageSize, onPageChange}) => (
+          <>
+            <TablePagination.Info
+              currentPage={currentPage}
+              pageSize={pageSize}
+              totalCount={totalCount}
+              itemName="bookings"
+            />
+            <TablePagination.Navigation
+              currentPage={currentPage}
+              pageCount={pageCount}
+              onPageChange={onPageChange}
+            />
+          </>
+        )}
+      </TablePagination>
     </div>
   );
 }

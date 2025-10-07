@@ -122,6 +122,7 @@ export async function getFindClinics({ page, filters = [] }) {
         .from('clinics')
         .select('id, name, address, images, pricing, pricingModel, specialty',
             { count: 'exact' })
+        .eq('status', 'available')
         .order('created_at', { ascending: false });
 
     // pagination

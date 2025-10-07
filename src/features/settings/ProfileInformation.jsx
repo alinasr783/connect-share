@@ -5,6 +5,7 @@ import {useUpdateUser} from "./useUpdateUser";
 import Button from "../../ui/Button";
 import FormRow from "../../ui/FormRow";
 import Spinner from "../../ui/Spinner";
+import SpecialtiesSelector from "../../ui/SpecialtiesSelector";
 
 function ProfileInformation() {
   const {user, isUserPending} = useUser();
@@ -16,7 +17,7 @@ function ProfileInformation() {
     handleSubmit,
     setValue,
     watch,
-    formState: {errors, isDirty},
+    formState: {errors},
   } = useForm({
     defaultValues: {
       fullName: user?.user_metadata?.fullName || "",
@@ -24,7 +25,7 @@ function ProfileInformation() {
       phone: user?.user_metadata?.phone || "",
       avatar: user?.user_metadata?.avatar || "",
       medicalLicenseNumber: user?.user_metadata?.medicalLicenseNumber || "",
-      specialty: user?.user_metadata?.specialty || "",
+      specialties: user?.user_metadata?.specialties || [],
     },
   });
 
@@ -44,12 +45,11 @@ function ProfileInformation() {
         "medicalLicenseNumber",
         user.user_metadata?.medicalLicenseNumber || ""
       );
-      setValue("specialty", user.user_metadata?.specialty || "");
+      setValue("specialties", user.user_metadata?.specialties || []);
       setAvatarPreview(user.user_metadata?.avatar || "");
     }
   }, [user, setValue]);
 
-  // Update avatar preview when avatar value changes
   useEffect(() => {
     if (avatarValue && avatarValue.startsWith("data:image/")) {
       setAvatarPreview(avatarValue);
@@ -83,7 +83,7 @@ function ProfileInformation() {
     // Add doctor-specific fields if user is a doctor
     if (user?.user_metadata?.userType === "doctor") {
       updateData.medicalLicenseNumber = data.medicalLicenseNumber;
-      updateData.specialty = data.specialty;
+      updateData.specialties = data.specialties;
     }
 
     updateUser(updateData);
@@ -170,7 +170,7 @@ function ProfileInformation() {
                 {...register("phone", {
                   pattern: {
                     value:
-                      /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/,
+                      /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/,
                     message: "Please enter a valid phone number",
                   },
                 })}
@@ -187,9 +187,8 @@ function ProfileInformation() {
                     type="text"
                     id="medicalLicenseNumber"
                     className="input"
-                    placeholder="Enter your medical license number"
+                    placeholder="Enter your medical license number (optional)"
                     {...register("medicalLicenseNumber", {
-                      required: "Medical license number is required",
                       minLength: {
                         value: 3,
                         message: "License number must be at least 3 characters",
@@ -198,19 +197,12 @@ function ProfileInformation() {
                   />
                 </FormRow>
 
-                <FormRow label="Specialty" errors={errors.specialty}>
-                  <input
-                    type="text"
-                    id="specialty"
-                    className="input"
-                    placeholder="Enter your medical specialty"
-                    {...register("specialty", {
-                      required: "Specialty is required",
-                      minLength: {
-                        value: 2,
-                        message: "Specialty must be at least 2 characters",
-                      },
-                    })}
+                <FormRow label="Specialties" errors={errors.specialties}>
+                  <SpecialtiesSelector
+                    selectedSpecialties={watch("specialties") || []}
+                    onSpecialtiesChange={(specialties) =>
+                      setValue("specialties", specialties)
+                    }
                   />
                 </FormRow>
               </>
@@ -232,10 +224,7 @@ function ProfileInformation() {
       </div>
 
       <div className="flex justify-end pt-2">
-        <Button
-          variation="primary"
-          type="submit"
-          disabled={isUpdating || !isDirty}>
+        <Button variation="primary" type="submit" disabled={isUpdating}>
           {isUpdating ? "Saving..." : "Save Changes"}
         </Button>
       </div>

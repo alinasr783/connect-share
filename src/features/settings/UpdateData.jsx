@@ -6,7 +6,7 @@ import Account from "./Account";
 import Heading from "../../ui/Heading";
 import Spinner from "../../ui/Spinner";
 
-function UpdateProviderData() {
+function UpdateData() {
   const {isUserPending} = useUser();
   const [activeTab, setActiveTab] = useState("profile");
 
@@ -15,7 +15,6 @@ function UpdateProviderData() {
   return (
     <div className="py-8">
       <div className="max-w-5xl mx-auto px-4 bg-white rounded-2xl shadow-xs p-8">
-        {/* Header */}
         <div className="mb-8">
           <Heading as="h1">Profile Settings</Heading>
           <p className="text-gray-600">
@@ -23,7 +22,6 @@ function UpdateProviderData() {
           </p>
         </div>
 
-        {/* Tab Navigation */}
         <div className="mb-8">
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8">
@@ -58,7 +56,6 @@ function UpdateProviderData() {
           </div>
         </div>
 
-        {/* Tab Content */}
         {activeTab === "profile" && <ProfileInformation />}
 
         {activeTab === "password" && <ChangePasswordForm />}
@@ -69,4 +66,4 @@ function UpdateProviderData() {
   );
 }
 
-export default UpdateProviderData;
+export default UpdateData;

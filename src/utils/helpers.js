@@ -20,9 +20,15 @@ export const getTimeFromCreatedAt = (createdAt) => {
 };
 
 export const formatCurrency = (amount) => {
+    if (amount === null || amount === undefined || isNaN(amount)) {
+        return "EGP 0.00";
+    }
+
     return amount.toLocaleString("en-US", {
         style: "currency",
         currency: "EGP",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
     });
 };
 

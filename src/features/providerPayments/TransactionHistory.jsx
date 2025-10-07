@@ -1,79 +1,60 @@
-import {useState} from "react";
+import {useState, useEffect} from "react";
 import StatusBadge from "../../ui/StatusBadge";
 import Table from "../../ui/Table";
+import TablePagination from "../../ui/TablePagination";
+import useProviderTransactions from "./useProviderTransactions";
+import useTransactionFilters from "./useTransactionFilters";
+import {formatCurrency, formatDate} from "../../utils/helpers";
+import Spinner from "../../ui/Spinner";
 
 function TransactionHistory() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedClinic, setSelectedClinic] = useState("all");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedType, setSelectedType] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState("all");
 
-  // Mock transaction data
-  const transactions = [
-    {
-      id: 1,
-      date: "2024-03-16",
-      rental: "City Health / Dr. Olivia Hayes",
-      amount: 350.0,
-      type: "Earning",
-      status: "Paid",
-    },
-    {
-      id: 2,
-      date: "2024-03-15",
-      rental: "Payout to Bank Account",
-      amount: -2500.0,
-      type: "Payout",
-      status: "Paid",
-    },
-    {
-      id: 3,
-      date: "2024-03-14",
-      rental: "Downtown Medical / Dr. Noah Clark",
-      amount: 400.0,
-      type: "Earning",
-      status: "Pending",
-    },
-    {
-      id: 4,
-      date: "2024-03-13",
-      rental: "Metro Clinic / Dr. Sarah Johnson",
-      amount: 275.0,
-      type: "Earning",
-      status: "Paid",
-    },
-    {
-      id: 5,
-      date: "2024-03-12",
-      rental: "Payout to Bank Account",
-      amount: -1500.0,
-      type: "Payout",
-      status: "Processing",
-    },
-  ];
+  const {transactions, totalCount, pageSize, isLoadingTransactions} =
+    useProviderTransactions();
 
-  const filteredTransactions = transactions.filter((transaction) => {
-    const matchesSearch = transaction.rental
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesClinic =
-      selectedClinic === "all" || transaction.rental.includes(selectedClinic);
-    const matchesType =
-      selectedType === "all" ||
-      transaction.type.toLowerCase() === selectedType.toLowerCase();
+  const {updateFilter, updateMultipleFilters} = useTransactionFilters();
 
-    return matchesSearch && matchesClinic && matchesType;
-  });
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      updateFilter("search", searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, updateFilter]);
+
+  useEffect(() => {
+    updateFilter("date", selectedDate);
+  }, [selectedDate, updateFilter]);
+
+  useEffect(() => {
+    updateMultipleFilters({
+      type: selectedType,
+      status: selectedStatus,
+    });
+  }, [selectedType, selectedStatus, updateMultipleFilters]);
+
+  if (isLoadingTransactions) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center py-8">
+          <Spinner />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
-        {/* Search and Filters */}
         <div className="flex flex-col sm:flex-row gap-4">
-          {/* Search Input */}
-          <div className="flex-1 relative">
-            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+          <div className="relative">
+            <span
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 
+            text-gray-400">
               <span className="ri-search-line"></span>
             </span>
             <input
@@ -81,11 +62,11 @@ function TransactionHistory() {
               placeholder="Search transactions..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="input-icon "
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg 
+              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
-          {/* Date Filter */}
           <div className="relative">
             <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
               <span className="ri-calendar-line"></span>
@@ -99,7 +80,6 @@ function TransactionHistory() {
             />
           </div>
 
-          {/* Type Filter */}
           <select
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
@@ -107,36 +87,48 @@ function TransactionHistory() {
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
             <option value="all">All Types</option>
             <option value="earning">Earning</option>
-            <option value="payout">Payout</option>
+            <option value="withdrawal">Withdrawal</option>
+          </select>
+
+          <select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg 
+            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
+            <option value="failed">Failed</option>
           </select>
         </div>
       </div>
 
-      {/* Table */}
       <Table maxHeight="500px">
         <Table.Header>
           <Table.Row>
             <Table.Head>DATE</Table.Head>
-            <Table.Head>RENTAL</Table.Head>
+            <Table.Head>RENTAL/SERVICE</Table.Head>
             <Table.Head>AMOUNT</Table.Head>
             <Table.Head>TYPE</Table.Head>
             <Table.Head>STATUS</Table.Head>
           </Table.Row>
         </Table.Header>
         <Table.Body>
-          {filteredTransactions.length > 0 ? (
-            filteredTransactions.map((transaction) => (
+          {transactions.length > 0 ? (
+            transactions.map((transaction) => (
               <Table.Row key={transaction.id}>
-                <Table.Cell>{transaction.date}</Table.Cell>
-                <Table.Cell>{transaction.rental}</Table.Cell>
+                <Table.Cell>{formatDate(transaction.created_at)}</Table.Cell>
+                <Table.Cell>{transaction.service}</Table.Cell>
                 <Table.Cell
                   className={`font-medium ${
                     transaction.amount > 0 ? "text-green-600" : "text-red-600"
                   }`}>
-                  {transaction.amount > 0 ? "+" : ""}$
-                  {transaction.amount.toLocaleString()}
+                  {transaction.amount < 0 ? "-" : "+"}{" "}
+                  {formatCurrency(Math.abs(transaction.amount))}
                 </Table.Cell>
-                <Table.Cell>{transaction.type}</Table.Cell>
+                <Table.Cell className="capitalize">
+                  {transaction.type}
+                </Table.Cell>
                 <Table.Cell>
                   <StatusBadge status={transaction.status} />
                 </Table.Cell>
@@ -147,6 +139,36 @@ function TransactionHistory() {
           )}
         </Table.Body>
       </Table>
+
+      {totalCount > 0 && (
+        <TablePagination
+          totalCount={totalCount}
+          pageSize={pageSize}
+          className="mt-6">
+          {({currentPage, pageCount, totalCount, pageSize, onPageChange}) => (
+            <>
+              <TablePagination.Info
+                currentPage={currentPage}
+                pageSize={pageSize}
+                totalCount={totalCount}
+                itemName="transactions"
+              />
+              <div className="flex items-center gap-4">
+                <TablePagination.PageNumbers
+                  currentPage={currentPage}
+                  pageCount={pageCount}
+                  onPageChange={onPageChange}
+                />
+                <TablePagination.Navigation
+                  currentPage={currentPage}
+                  pageCount={pageCount}
+                  onPageChange={onPageChange}
+                />
+              </div>
+            </>
+          )}
+        </TablePagination>
+      )}
     </div>
   );
 }

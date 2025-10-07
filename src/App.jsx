@@ -5,17 +5,18 @@ import {BrowserRouter, Navigate, Route, Routes} from "react-router-dom";
 import useAuthListener from "./features/auth/useAuthListener";
 import DoctorAppLayout from "./features/Dashboard/DoctorAppLayout";
 import ProviderAppLayout from "./features/Dashboard/ProviderAppLayout";
-import ProviderDashboard from "./features/providerDashboard/ProviderDashboard";
 import Dashboard from "./pages/Dashboard";
 import DoctorBookings from "./pages/DoctorBookings";
 import DoctorFindClinics from "./pages/DoctorFindClinics";
+import DoctorPayments from "./pages/DoctorPayments";
 import DoctorSupport from "./pages/DoctorSupport";
 import FindClinic from "./pages/FindClinic";
 import Login from "./pages/Login";
 import ProviderClinics from "./pages/ProviderClinics";
+import ProviderDashboard from "./pages/ProviderDashboard";
 import ProviderPayments from "./pages/ProviderPayments";
 import ProviderRentals from "./pages/ProviderRentals";
-import {default as ProviderSettings} from "./pages/ProviderSettings";
+import Settings, {default as ProviderSettings} from "./pages/Settings";
 import Signup from "./pages/Signup";
 import Home from "./ui/Home/Home";
 import NotFound from "./ui/NotFound";
@@ -75,8 +76,8 @@ function AuthWrapper() {
             <Route path="clinics" element={<DoctorFindClinics />} />
             <Route path="clinics/:id" element={<FindClinic />} />
             <Route path="bookings" element={<DoctorBookings />} />
-            <Route path="payments" element={<ProviderPayments />} />
-            <Route path="settings" element={<ProviderSettings />} />
+            <Route path="payments" element={<DoctorPayments />} />
+            <Route path="settings" element={<Settings />} />
             <Route path="support" element={<DoctorSupport />} />
           </Route>
         </Route>

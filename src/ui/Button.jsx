@@ -31,9 +31,8 @@ function Button({
               disabled:opacity-50 ${className}`,
 
     link: ` ${sizeStyles[size]} bg-transparent rounded-xl text-primary 
-              transition-colors 
-              duration-300 cursor-pointer inline-block disabled:cursor-not-allowed 
-              disabled:opacity-50 ${className}`,
+              hover:text-primary/70 transition-colors
+              duration-300 cursor-pointer inline-block ${className}`,
   };
 
   if (to) {

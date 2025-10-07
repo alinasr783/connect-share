@@ -1,11 +1,13 @@
 import {createPortal} from "react-dom";
 import Button from "./Button";
 
-function Modal({children, onClose, title, type = "create"}) {
+function Modal({children, onClose, title, type = "create", isOpen = true}) {
   const typeStyles = {
     large: "max-w-7xl w-full max-h-[95vh]",
     small: "max-w-md ",
   };
+
+  if (!isOpen) return null;
 
   return createPortal(
     <div
