@@ -23,6 +23,27 @@ export async function getDoctorTransactions(userId) {
     return data;
 }
 
+export async function getDoctorTransactionsThisMonth(userId) {
+    const now = new Date();
+    const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfCurrentMonth = new Date(now.getFullYear(),
+        now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+    const { data, error } = await supabase
+        .from('doc_transactions')
+        .select('*')
+        .eq('userId', userId)
+        .gte('created_at', startOfCurrentMonth.toISOString())
+        .lte('created_at', endOfCurrentMonth.toISOString())
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error(error);
+        throw new Error('Error getting doctor transactions for this month');
+    }
+
+    return data;
+}
 
 export async function createProviderWithdrawalWithTransaction(withdrawalData) {
     const { userId, amount, payment_method, method_id, status } = withdrawalData;

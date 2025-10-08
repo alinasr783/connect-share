@@ -11,7 +11,6 @@ function useDoctorPayments() {
         enabled: !!user?.id,
     });
 
-    // Filter completed bookings for total spent calculation
     const completedBookings = bookings?.filter(booking =>
         booking.status === 'completed'
     ) || [];
@@ -20,17 +19,6 @@ function useDoctorPayments() {
         booking.status === 'confirmed'
     ) || [];
 
-    // Get current month's bookings
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
-
-    const thisMonthBookings = bookings?.filter(booking => {
-        const bookingDate = new Date(booking.created_at);
-        return bookingDate.getMonth() === currentMonth &&
-            bookingDate.getFullYear() === currentYear;
-    }) || [];
-
-    // Calculate total spent from completed bookings
     const calculateTotalSpent = () => {
         if (!completedBookings || completedBookings.length === 0) return 0;
 
@@ -40,7 +28,6 @@ function useDoctorPayments() {
         }, 0);
     };
 
-    // Calculate upcoming payments from pending bookings
     const calculateUpcomingPayments = () => {
         if (!upcomingBookings || upcomingBookings.length === 0) return 0;
 
@@ -50,25 +37,15 @@ function useDoctorPayments() {
         }, 0);
     };
 
-    // Calculate transactions this month (count of bookings)
-    const calculateTransactionThisMonth = () => {
-        if (!thisMonthBookings || thisMonthBookings.length === 0) return 0;
-
-        return thisMonthBookings.length;
-    };
-
     const totalSpent = calculateTotalSpent();
     const upcomingPayments = calculateUpcomingPayments();
-    const transactionThisMonth = calculateTransactionThisMonth();
 
     return {
         totalSpent,
         upcomingPayments,
-        transactionThisMonth,
         isLoadingBookings,
         bookings: bookings || [],
         completedBookings,
-        thisMonthBookings,
     };
 }
 

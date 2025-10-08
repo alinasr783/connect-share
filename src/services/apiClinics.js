@@ -170,6 +170,7 @@ export async function getCheckIfBooked(userId, clinicId) {
         .select('*')
         .eq('docId', userId)
         .eq('clinicId', clinicId)
+        .eq('status', 'unconfirmed')
 
     if (error) {
         console.error('Error getting check if booked:', error);
