@@ -18,6 +18,7 @@ function RoleProtectedRoute({children, role}) {
         return <Navigate to="/provider" replace={false} />;
       if (userType === "doctor")
         return <Navigate to="/doctor" replace={false} />;
+      if (userType === "admin") return <Navigate to="/admin" replace={false} />;
       return <Navigate to="/dashboard" replace={false} />;
     }
   }

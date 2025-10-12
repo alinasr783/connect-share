@@ -3,6 +3,7 @@ import {DayPicker} from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import {useForm} from "react-hook-form";
 import Button from "../../ui/Button";
+import SearchableDropdown from "../../ui/SearchableDropdown";
 import useUser from "../auth/useUser";
 import useCreateClinic from "./useCreateClinic";
 import useUpdateClinic from "./updateClinic";
@@ -19,6 +20,7 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
     defaultValues: isEditSession
       ? {
           ...editValues,
+          status: editValues.status || "active",
           hourlyRate: editValues.pricing?.hourlyRate || "",
           dailyRate: editValues.pricing?.dailyRate || "",
           monthlyRate: editValues.pricing?.monthlyRate || "",
@@ -26,7 +28,7 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
           minimumServiceValue: editValues.pricing?.minimumServiceValue || "",
           ownerCommission: editValues.pricing?.ownerCommission || "",
         }
-      : {},
+      : {status: "active"},
   });
 
   const [selectedDays, setSelectedDays] = useState(
@@ -115,6 +117,24 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
   const {user} = useUser();
   const {createClinic, isCreatingClinic} = useCreateClinic();
   const {updateClinic, isUpdatingClinic} = useUpdateClinic();
+
+  // State for selected provider (for admin)
+  const [selectedProvider, setSelectedProvider] = useState(() => {
+    if (isEditSession && clinicToEdit.userId && clinicToEdit.providerName) {
+      return {
+        userId: clinicToEdit.userId,
+        fullName: clinicToEdit.providerName,
+        email: clinicToEdit.providerEmail || "",
+      };
+    }
+    return user?.user_metadata?.userType === "admin"
+      ? null
+      : {
+          userId: user?.id,
+          fullName: user?.user_metadata?.fullName || "",
+          email: user?.email || "",
+        };
+  });
 
   const isLoading = isCreatingClinic || isUpdatingClinic || isUploadingImages;
 
@@ -245,6 +265,11 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
   };
 
   const onSubmit = async (data) => {
+    // Validation for admin provider selection
+    if (user?.user_metadata?.userType === "admin" && !selectedProvider) {
+      return; // Error message is already shown in the UI
+    }
+
     if (selectedDays.length === 0) {
       setAvailableDaysError("Please select at least one available day.");
       return;
@@ -302,7 +327,7 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
 
     const clinicData = {
       ...cleanData,
-      userId: user.id,
+      userId: selectedProvider?.userId || user?.id,
       features: features,
       pricing: pricingData,
       images: newImages,
@@ -311,8 +336,6 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
       },
       availableHours: availableHours,
     };
-
-    console.log(clinicData);
 
     const callback = {
       onSuccess: () => {
@@ -374,6 +397,67 @@ function CreateClinicForm({clinicToEdit = {}, onClose}) {
                 <p className="text-red-500">{errors.address.message}</p>
               )}
             </div>
+
+            {/* Status field for admins */}
+            {user?.user_metadata?.userType === "admin" && (
+              <div className="relative">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Status
+                </label>
+                <div className="relative">
+                  <select
+                    disabled={isLoading}
+                    id="status"
+                    {...register("status")}
+                    className="w-full px-4 py-2.5 text-base bg-white border 
+                      border-gray-300 rounded-lg 
+                    appearance-none focus:outline-none focus:ring-2 
+                    focus:ring-primary focus:border-transparent
+                    disabled:bg-gray-100 disabled:cursor-not-allowed
+                    transition-all duration-200">
+                    <option value="available">available</option>
+                    <option value="pending">pending</option>
+                    <option value="suspended">suspended</option>
+                    <option value="unavailable">unavailable</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                    <svg
+                      className="w-5 h-5 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </div>
+                </div>
+                {errors.status && (
+                  <p className="mt-2 text-sm text-red-600">
+                    {errors.status.message}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Provider selection for admins */}
+            {user?.user_metadata?.userType === "admin" && (
+              <div className="relative">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Provider
+                </label>
+                <SearchableDropdown
+                  selectedProvider={selectedProvider}
+                  onSelectProvider={setSelectedProvider}
+                  placeholder="Search for provider by name, email, or ID..."
+                  disabled={isLoading}
+                  error={!selectedProvider ? "Please select a provider" : null}
+                />
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div>

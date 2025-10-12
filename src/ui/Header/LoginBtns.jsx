@@ -3,7 +3,6 @@ import {Link} from "react-router-dom";
 import useUser from "../../features/auth/useUser";
 import Button from "../Button";
 import SignOut from "../../features/auth/SignOut";
-import SpecialtiesDisplay from "../SpecialtiesDisplay";
 
 function LoginBtns() {
   const {user, isUserPending} = useUser();
@@ -89,15 +88,6 @@ function LoginBtns() {
             <p className="text-xs text-gray-500 capitalize font-medium">
               {user.user_metadata?.userType || ""}
             </p>
-            {user.user_metadata?.userType === "doctor" &&
-              user.user_metadata?.specialties &&
-              user.user_metadata.specialties.length > 0 && (
-                <SpecialtiesDisplay
-                  specialties={user.user_metadata.specialties}
-                  maxDisplay={1}
-                  className="mt-1"
-                />
-              )}
           </div>
         </div>
 

@@ -16,6 +16,8 @@ function useUser() {
         user,
         isUserPending,
         isAuthenticated: user?.role === "authenticated",
+        isActive: user?.user_metadata?.status === "active",
+        isDoctor: user?.user_metadata?.userType === "doctor",
         error,
     }
 }

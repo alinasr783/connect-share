@@ -17,7 +17,9 @@ function User() {
         />
       )}
       <p className="text-lg font-semibold">
-        {userType === "provider" ? "Pro." : "Dr."} {name}
+        {userType === "admin"
+          ? "Admin Panel"
+          : `${userType === "provider" ? "Pro." : "Dr."} ${name}`}
       </p>
     </div>
   );

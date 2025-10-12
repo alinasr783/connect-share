@@ -17,6 +17,9 @@ function Dashboard() {
     if (userType === "doctor") {
       return <Navigate to="/doctor" replace={false} />;
     }
+    if (userType === "admin") {
+      return <Navigate to="/admin" replace={false} />;
+    }
   }
 
   // Fallback

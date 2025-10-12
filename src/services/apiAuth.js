@@ -25,6 +25,7 @@ export async function signup({ fullName, email, userType, password, syndicateCar
             avatar: '',
             phone: '',
             medicalLicenseNumber: '',
+            status: userType === 'doctor' ? 'inactive' : 'active', // Doctors start as inactive
         };
 
         // Add doctor-specific data
@@ -50,6 +51,7 @@ export async function signup({ fullName, email, userType, password, syndicateCar
             fullName,
             userType,
             phone: '',
+            status: userType === 'doctor' ? 'inactive' : 'active', // Doctors start as inactive
         };
 
         // Add doctor-specific fields if user is a doctor

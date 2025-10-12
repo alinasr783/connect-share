@@ -10,6 +10,7 @@ function UpdateClinic() {
 
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["provider-clinics"] });
+            queryClient.invalidateQueries({ queryKey: ["admin-clinics"] });
             toast.success("Clinic updated successfully");
         },
 

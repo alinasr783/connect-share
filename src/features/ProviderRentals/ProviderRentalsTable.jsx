@@ -1,9 +1,9 @@
+import {RENTALS_PAGE_SIZE} from "../../constant/const";
 import Spinner from "../../ui/Spinner";
 import Table from "../../ui/Table";
 import TablePagination from "../../ui/TablePagination";
 import ProviderRentalsRow from "./ProviderRentalsRow";
 import useProviderRentals from "./useProviderRentals";
-import {RENTALS_PAGE_SIZE} from "../../constant/const";
 
 function ProviderRentalsTable() {
   const {rentals, totalCount, isLoadingRentals} = useProviderRentals();

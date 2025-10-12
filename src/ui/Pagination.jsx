@@ -103,9 +103,8 @@ function Pagination({count}) {
                 className={
                   currentPage === pageNumber
                     ? activeButtonStyle
-                    : disabledButtonStyle
+                    : pageButtonStyle
                 }
-                disabled={true}
                 onClick={() => handlePageClick(pageNumber)}>
                 {pageNumber}
               </button>

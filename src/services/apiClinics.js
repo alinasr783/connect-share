@@ -179,3 +179,89 @@ export async function getCheckIfBooked(userId, clinicId) {
 
     return data;
 }
+
+export async function getClinicById(id) {
+    const { data, error } = await supabase
+        .from('clinics')
+        .select(`
+            *,
+            provider:userId(
+                userId,
+                fullName,
+                email
+            )
+        `)
+        .eq('id', id)
+        .single();
+
+    if (error) {
+        console.error('Error getting clinic:', error);
+        throw new Error('Error getting clinic');
+    }
+
+    if (data && data.provider) {
+        return {
+            ...data,
+            providerName: data.provider.fullName,
+            providerEmail: data.provider.email,
+            providerId: data.provider.userId
+        };
+    }
+
+    return data;
+}
+
+export async function getAdminClinics({ page = 1, pageSize = PAGE_SIZE, status = "", date = "" } = {}) {
+    const query = supabase
+        .from('clinics')
+        .select(`
+            *,
+            provider:userId(
+                userId,
+                fullName,
+                email
+            )
+        `, { count: 'exact' })
+        .order('created_at', { ascending: false })
+
+    if (status) {
+        query.eq('status', status);
+    }
+
+    if (date) {
+        const startDate = new Date(date);
+        const endDate = new Date(date);
+        endDate.setDate(endDate.getDate() + 1);
+
+        query.gte('created_at', startDate.toISOString())
+            .lt('created_at', endDate.toISOString());
+    }
+
+    if (page) {
+        const from = (page - 1) * pageSize;
+        const to = from + pageSize - 1;
+
+        query.range(from, to);
+    }
+
+    const { data, error, count } = await query;
+
+    if (error) {
+        console.error('Error getting admin clinics:', error);
+        throw new Error('Error getting admin clinics');
+    }
+
+    const transformedData = data?.map(clinic => {
+        if (clinic.provider) {
+            return {
+                ...clinic,
+                providerName: clinic.provider.fullName,
+                providerEmail: clinic.provider.email,
+                providerId: clinic.provider.userId
+            };
+        }
+        return clinic;
+    }) || [];
+
+    return { data: transformedData, count: count ?? 0 };
+}

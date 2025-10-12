@@ -1,9 +1,17 @@
 import React, {useState, useRef, useEffect} from "react";
+import {createPortal} from "react-dom";
 
-function DropdownMenu({trigger, children, position = "right", className = ""}) {
+function DropdownMenu({
+  trigger,
+  children,
+  position = "right",
+  className = "",
+  portal = true,
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
   const triggerRef = useRef(null);
+  const [coords, setCoords] = useState({top: 0, left: 0});
 
   const closeMenu = () => setIsOpen(false);
 
@@ -28,18 +36,50 @@ function DropdownMenu({trigger, children, position = "right", className = ""}) {
     };
   }, [isOpen]);
 
-  const getPositionClasses = () => {
-    switch (position) {
-      case "right":
-        return "right-0";
-      case "left":
-        return "left-0";
-      case "center":
-        return "left-1/2 transform -translate-x-1/2";
-      default:
-        return "right-0";
-    }
-  };
+  // Compute viewport coordinates when opened
+  useEffect(() => {
+    if (!isOpen || !portal) return;
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    // Default menu width estimate; will be corrected after first render
+    let width = 160;
+    const updateCoords = () => {
+      const menuRect = menuRef.current?.getBoundingClientRect();
+      width = menuRect?.width || width;
+      let left = rect.left + window.scrollX;
+      if (position === "right") left = rect.right - width + window.scrollX;
+      if (position === "center")
+        left = rect.left + rect.width / 2 - width / 2 + window.scrollX;
+      const top = rect.bottom + 8 + window.scrollY;
+      setCoords({top, left});
+    };
+
+    updateCoords();
+
+    const onResizeScroll = () => updateCoords();
+    window.addEventListener("resize", onResizeScroll);
+    window.addEventListener("scroll", onResizeScroll, true);
+    return () => {
+      window.removeEventListener("resize", onResizeScroll);
+      window.removeEventListener("scroll", onResizeScroll, true);
+    };
+  }, [isOpen, portal, position]);
+
+  const menuContent = (
+    <div
+      ref={menuRef}
+      className={`bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[160px] z-[1000]`}
+      style={
+        portal ? {position: "fixed", top: coords.top, left: coords.left} : {}
+      }>
+      {React.Children.map(children, (child) =>
+        React.isValidElement(child)
+          ? React.cloneElement(child, {closeMenu})
+          : child
+      )}
+    </div>
+  );
 
   return (
     <div className={`relative ${className}`}>
@@ -47,18 +87,12 @@ function DropdownMenu({trigger, children, position = "right", className = ""}) {
         {trigger}
       </div>
 
-      {isOpen && (
-        <div
-          ref={menuRef}
-          className={`absolute top-full mt-1 z-50 bg-white rounded-lg shadow-lg 
-             border border-gray-200 py-1 min-w-[160px] ${getPositionClasses()}`}>
-          {React.Children.map(children, (child) =>
-            React.isValidElement(child)
-              ? React.cloneElement(child, {closeMenu})
-              : child
-          )}
-        </div>
-      )}
+      {isOpen &&
+        (portal ? (
+          createPortal(menuContent, document.body)
+        ) : (
+          <div className="absolute top-full mt-1 right-0">{menuContent}</div>
+        ))}
     </div>
   );
 }

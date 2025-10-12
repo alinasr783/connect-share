@@ -3,8 +3,14 @@ import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
 import {Toaster} from "react-hot-toast";
 import {BrowserRouter, Navigate, Route, Routes} from "react-router-dom";
 import useAuthListener from "./features/auth/useAuthListener";
+import AdminAppLayout from "./features/Dashboard/AdminAppLayout";
 import DoctorAppLayout from "./features/Dashboard/DoctorAppLayout";
 import ProviderAppLayout from "./features/Dashboard/ProviderAppLayout";
+import AdminBookingDetails from "./pages/AdminBookingDetails";
+import AdminBookings from "./pages/AdminBookings";
+import AdminClinicDetails from "./pages/AdminClinicDetails";
+import AdminClinics from "./pages/AdminClinics";
+import AdminUsers from "./pages/AdminUsers";
 import Dashboard from "./pages/Dashboard";
 import DoctorBookings from "./pages/DoctorBookings";
 import DoctorFindClinics from "./pages/DoctorFindClinics";
@@ -22,6 +28,7 @@ import Home from "./ui/Home/Home";
 import NotFound from "./ui/NotFound";
 import ProtectedRoutes from "./ui/ProtectedRoutes";
 import RoleProtectedRoute from "./ui/RoleProtectedRoute";
+import AdminDoctorDetails from "./pages/AdminDoctorDetails";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -79,6 +86,22 @@ function AuthWrapper() {
             <Route path="payments" element={<DoctorPayments />} />
             <Route path="settings" element={<Settings />} />
             <Route path="support" element={<DoctorSupport />} />
+          </Route>
+
+          <Route
+            path="admin"
+            element={
+              <RoleProtectedRoute role="admin">
+                <AdminAppLayout />
+              </RoleProtectedRoute>
+            }>
+            <Route index element={<Navigate to="bookings" />} />
+            <Route path="clinics" element={<AdminClinics />} />
+            <Route path="clinics/:id" element={<AdminClinicDetails />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="doctors/:userId" element={<AdminDoctorDetails />} />
+            <Route path="bookings" element={<AdminBookings />} />
+            <Route path="bookings/:id" element={<AdminBookingDetails />} />
           </Route>
         </Route>
 

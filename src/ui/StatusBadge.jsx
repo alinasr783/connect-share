@@ -21,8 +21,27 @@ function StatusBadge({status, className = ""}) {
         return "bg-green-100 text-green-800";
       case "refunded":
         return "bg-red-100 text-red-800";
+      case "unpaid":
+        return "bg-red-100 text-red-800";
+      case "paid":
+        return "bg-green-100 text-green-800";
+      case "active":
+        return "bg-green-100 text-green-800 border border-green-200";
+      case "inactive":
+        return "bg-red-100 text-red-800 border border-red-200";
       default:
         return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status?.toLowerCase()) {
+      case "active":
+        return "✓";
+      case "inactive":
+        return "✕";
+      default:
+        return "";
     }
   };
 
@@ -32,6 +51,9 @@ function StatusBadge({status, className = ""}) {
             rounded-full font-semibold text-xs ${getStatusStyles(
               status
             )} ${className}`}>
+      {getStatusIcon(status) && (
+        <span className="mr-1">{getStatusIcon(status)}</span>
+      )}
       {status}
     </span>
   );
