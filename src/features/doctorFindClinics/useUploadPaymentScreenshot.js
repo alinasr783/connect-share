@@ -1,6 +1,6 @@
 // features/doctorFindClinics/useUploadPaymentScreenshot.js
 import { useState } from 'react';
-import { supabase } from '../../services/supabase'; // تأكد من مسار ال supabase client
+import supabase from '../../services/supabase'; // تأكد من مسار ال supabase client
 
 export function useUploadPaymentScreenshot() {
   const [isUploading, setIsUploading] = useState(false);
