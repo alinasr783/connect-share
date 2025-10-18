@@ -270,13 +270,46 @@ const ArrowLeftIcon = ({ className }) => (
   <i className={cn('ri-arrow-left-line', className)} />
 );
 
+const CheckIcon = ({ className }) => (
+  <i className={cn('ri-check-line', className)} />
+);
+
+const CloseIcon = ({ className }) => (
+  <i className={cn('ri-close-line', className)} />
+);
+
+// Image Display Component for Syndicate Card
+const ImageDisplay = ({ src, alt, className }) => {
+  const [imageError, setImageError] = useState(false);
+
+  if (!src || imageError) {
+    return (
+      <div className={cn('flex items-center justify-center bg-gray-100 rounded-lg border', className)}>
+        <div className="text-center text-gray-500">
+          <i className="ri-image-line text-2xl mb-2"></i>
+          <p className="text-sm">No Image</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={cn('rounded-lg border object-cover', className)}
+      onError={() => setImageError(true)}
+    />
+  );
+};
+
 // Main Component
 const UserProfile = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [editOpen, setEditOpen] = useState(false);
-  const [suspendOpen, setSuspendOpen] = useState(false);
+  const [statusOpen, setStatusOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editForm, setEditForm] = useState({
     fullName: '',
@@ -287,9 +320,11 @@ const UserProfile = () => {
     medicalLicenseNumber: '',
     syndicate_card: '',
     specialties: '',
-    location: ''
+    location: '',
+    avatarUrl: ''
   });
-  const [suspendReason, setSuspendReason] = useState('');
+  const [statusReason, setStatusReason] = useState('');
+  const [newStatus, setNewStatus] = useState('');
 
   const queryClient = useQueryClient();
 
@@ -342,8 +377,8 @@ const UserProfile = () => {
     onSuccess: () => {
       toast.success('User status updated successfully');
       queryClient.invalidateQueries(['user', userId]);
-      setSuspendOpen(false);
-      setSuspendReason('');
+      setStatusOpen(false);
+      setStatusReason('');
     },
     onError: (error) => {
       toast.error('Failed to update user status');
@@ -378,7 +413,8 @@ const UserProfile = () => {
         medicalLicenseNumber: user.medicalLicenseNumber || '',
         syndicate_card: user.syndicate_card || '',
         specialties: user.specialties ? JSON.stringify(user.specialties) : '[]',
-        location: user.location || ''
+        location: user.location || '',
+        avatarUrl: user.avatarUrl || ''
       });
     }
   }, [user, editOpen]);
@@ -402,16 +438,17 @@ const UserProfile = () => {
     deleteUserMutation(user.userId);
   };
 
-  const handleConfirmSuspend = () => {
+  const handleConfirmStatusChange = () => {
     if (!user) return;
-    updateStatus({ userId: user.userId, status: 'suspended' });
+    updateStatus({ userId: user.userId, status: newStatus });
   };
 
-  const handleStatusChange = (newStatus) => {
-    if (newStatus === 'suspended') {
-      setSuspendOpen(true);
+  const handleStatusChange = (status) => {
+    setNewStatus(status);
+    if (status === 'suspended') {
+      setStatusOpen(true);
     } else {
-      updateStatus({ userId: user.userId, status: newStatus });
+      updateStatus({ userId: user.userId, status });
     }
   };
 
@@ -464,6 +501,22 @@ const UserProfile = () => {
       currency: 'USD',
     }).format(amount || 0);
   };
+
+  // تحسين عرض الـ bookings
+  const displayBookings = useMemo(() => {
+    if (!userBookings?.data) return [];
+    
+    return userBookings.data.map(booking => ({
+      id: booking.id,
+      date: formatDate(booking.created_at),
+      clinic: booking.clinicId?.name || 'N/A',
+      status: booking.status,
+      price: booking.price,
+      payment_status: booking.payment_status,
+      doctor: booking.docId?.fullName || 'N/A',
+      provider: booking.provId?.fullName || 'N/A'
+    }));
+  }, [userBookings]);
 
   if (isLoading) {
     return (
@@ -526,14 +579,51 @@ const UserProfile = () => {
                 <EditIcon className="h-4 w-4" />
                 Edit Profile
               </Button>
-              <Button
-                variant={user.status === 'suspended' ? 'success' : 'warning'}
-                onClick={() => handleStatusChange(user.status === 'suspended' ? 'active' : 'suspended')}
-                className="flex items-center gap-2"
-              >
-                <BanIcon className="h-4 w-4" />
-                {user.status === 'suspended' ? 'Activate User' : 'Suspend User'}
-              </Button>
+              
+              {/* Status Change Buttons */}
+              {user.status === 'active' && (
+                <>
+                  <Button
+                    variant="warning"
+                    onClick={() => handleStatusChange('inactive')}
+                    className="flex items-center gap-2"
+                  >
+                    <CloseIcon className="h-4 w-4" />
+                    Deactivate
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => handleStatusChange('suspended')}
+                    className="flex items-center gap-2"
+                  >
+                    <BanIcon className="h-4 w-4" />
+                    Suspend
+                  </Button>
+                </>
+              )}
+              
+              {user.status === 'inactive' && (
+                <Button
+                  variant="success"
+                  onClick={() => handleStatusChange('active')}
+                  className="flex items-center gap-2"
+                >
+                  <CheckIcon className="h-4 w-4" />
+                  Activate
+                </Button>
+              )}
+              
+              {user.status === 'suspended' && (
+                <Button
+                  variant="success"
+                  onClick={() => handleStatusChange('active')}
+                  className="flex items-center gap-2"
+                >
+                  <CheckIcon className="h-4 w-4" />
+                  Activate
+                </Button>
+              )}
+
               <Button
                 variant="destructive"
                 onClick={() => setDeleteOpen(true)}
@@ -698,6 +788,10 @@ const UserProfile = () => {
                           <p className="text-sm text-gray-500">Joined Date</p>
                           <p className="font-semibold">{formatDate(user.created_at)}</p>
                         </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Last Updated</p>
+                          <p className="font-semibold">{formatDate(user.updated_at) || 'N/A'}</p>
+                        </div>
                         {user.medicalLicenseNumber && (
                           <div>
                             <p className="text-sm text-gray-500">Medical License</p>
@@ -724,6 +818,18 @@ const UserProfile = () => {
                           </Badge>
                         )}
                       </div>
+                    </div>
+                  )}
+
+                  {/* Syndicate Card Display */}
+                  {user.userType === 'doctor' && user.syndicate_card && (
+                    <div>
+                      <h4 className="font-semibold mb-2">Syndicate Card</h4>
+                      <ImageDisplay 
+                        src={user.syndicate_card} 
+                        alt="Syndicate Card"
+                        className="h-48 w-full max-w-md"
+                      />
                     </div>
                   )}
 
@@ -814,7 +920,13 @@ const UserProfile = () => {
                         </div>
                         <div>
                           <p className="text-sm text-gray-500 font-medium">Syndicate Card</p>
-                          <p className="text-gray-900">{user.syndicate_card || 'Not provided'}</p>
+                          <div className="mt-2">
+                            <ImageDisplay 
+                              src={user.syndicate_card} 
+                              alt="Syndicate Card"
+                              className="h-48 w-full max-w-md"
+                            />
+                          </div>
                         </div>
                       </div>
                       
@@ -848,7 +960,7 @@ const UserProfile = () => {
                     {user.userType === 'doctor' ? 'Bookings as Doctor' : 'Bookings as Provider'}
                   </h3>
                   
-                  {userBookings?.data && userBookings.data.length > 0 ? (
+                  {displayBookings && displayBookings.length > 0 ? (
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead className="bg-gray-100 border-b border-gray-200">
@@ -856,23 +968,39 @@ const UserProfile = () => {
                             <th className="text-left p-3 font-medium text-sm">Booking ID</th>
                             <th className="text-left p-3 font-medium text-sm">Date</th>
                             <th className="text-left p-3 font-medium text-sm">Clinic</th>
+                            {user.userType === 'doctor' && (
+                              <th className="text-left p-3 font-medium text-sm">Provider</th>
+                            )}
+                            {user.userType === 'provider' && (
+                              <th className="text-left p-3 font-medium text-sm">Doctor</th>
+                            )}
                             <th className="text-left p-3 font-medium text-sm">Status</th>
                             <th className="text-left p-3 font-medium text-sm">Price</th>
                             <th className="text-left p-3 font-medium text-sm">Payment</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {userBookings.data.map((booking) => (
+                          {displayBookings.map((booking) => (
                             <tr key={booking.id} className="border-b border-gray-100 hover:bg-gray-50">
                               <td className="p-3">
                                 <p className="font-medium">#{booking.id}</p>
                               </td>
                               <td className="p-3">
-                                <p className="text-sm">{formatDate(booking.created_at)}</p>
+                                <p className="text-sm">{booking.date}</p>
                               </td>
                               <td className="p-3">
-                                <p className="text-sm">{booking.clinicId?.name || 'N/A'}</p>
+                                <p className="text-sm">{booking.clinic}</p>
                               </td>
+                              {user.userType === 'doctor' && (
+                                <td className="p-3">
+                                  <p className="text-sm">{booking.provider}</p>
+                                </td>
+                              )}
+                              {user.userType === 'provider' && (
+                                <td className="p-3">
+                                  <p className="text-sm">{booking.doctor}</p>
+                                </td>
+                              )}
                               <td className="p-3">
                                 <Badge variant={
                                   booking.status === 'confirmed' ? 'success' :
@@ -950,11 +1078,11 @@ const UserProfile = () => {
                   <div>
                     <h4 className="font-semibold mb-4">Recent Transactions</h4>
                     <div className="space-y-3">
-                      {userBookings?.data?.slice(0, 5).map((booking) => (
+                      {displayBookings?.slice(0, 5).map((booking) => (
                         <div key={booking.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                           <div>
                             <p className="font-medium">Booking #{booking.id}</p>
-                            <p className="text-sm text-gray-500">{formatDate(booking.created_at)}</p>
+                            <p className="text-sm text-gray-500">{booking.date}</p>
                           </div>
                           <div className="text-right">
                             <p className={`font-semibold ${
@@ -1072,6 +1200,16 @@ const UserProfile = () => {
                     placeholder="Location"
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Avatar URL
+                  </label>
+                  <Input
+                    value={editForm.avatarUrl}
+                    onChange={(e) => setEditForm({...editForm, avatarUrl: e.target.value})}
+                    placeholder="Avatar URL"
+                  />
+                </div>
                 {editForm.userType === 'doctor' && (
                   <>
                     <div>
@@ -1086,13 +1224,22 @@ const UserProfile = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Syndicate Card
+                        Syndicate Card URL
                       </label>
                       <Input
                         value={editForm.syndicate_card}
                         onChange={(e) => setEditForm({...editForm, syndicate_card: e.target.value})}
-                        placeholder="Syndicate Card"
+                        placeholder="Syndicate Card URL"
                       />
+                      {editForm.syndicate_card && (
+                        <div className="mt-2">
+                          <ImageDisplay 
+                            src={editForm.syndicate_card} 
+                            alt="Syndicate Card Preview"
+                            className="h-32 w-full"
+                          />
+                        </div>
+                      )}
                     </div>
                   </>
                 )}
@@ -1164,30 +1311,35 @@ const UserProfile = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Suspend User Dialog */}
-      <Dialog open={suspendOpen} onOpenChange={setSuspendOpen}>
+      {/* Status Change Dialog */}
+      <Dialog open={statusOpen} onOpenChange={setStatusOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Suspend User</DialogTitle>
+            <DialogTitle>
+              {newStatus === 'suspended' ? 'Suspend User' : 'Change User Status'}
+            </DialogTitle>
             <DialogDescription>
-              Suspend {user?.fullName}? This will prevent them from accessing the system and making new bookings.
+              {newStatus === 'suspended' 
+                ? `Suspend ${user?.fullName}? This will prevent them from accessing the system and making new bookings.`
+                : `Change status for ${user?.fullName} to ${newStatus}?`
+              }
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Reason for suspension (optional)
+                Reason for status change (optional)
               </label>
               <Textarea
-                value={suspendReason}
-                onChange={(e) => setSuspendReason(e.target.value)}
-                placeholder="Enter reason for suspension..."
+                value={statusReason}
+                onChange={(e) => setStatusReason(e.target.value)}
+                placeholder="Enter reason for status change..."
                 rows={3}
               />
             </div>
             <div className="flex gap-2 pt-4">
               <Button 
-                onClick={() => setSuspendOpen(false)} 
+                onClick={() => setStatusOpen(false)} 
                 variant="outline" 
                 className="flex-1"
                 disabled={isUpdatingStatus}
@@ -1195,12 +1347,12 @@ const UserProfile = () => {
                 Cancel
               </Button>
               <Button 
-                onClick={handleConfirmSuspend}
-                variant="destructive"
+                onClick={handleConfirmStatusChange}
+                variant={newStatus === 'suspended' ? 'destructive' : 'warning'}
                 className="flex-1"
                 disabled={isUpdatingStatus}
               >
-                {isUpdatingStatus ? 'Suspending...' : 'Suspend User'}
+                {isUpdatingStatus ? 'Updating...' : `Set to ${newStatus}`}
               </Button>
             </div>
           </div>
