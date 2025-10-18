@@ -1,6 +1,6 @@
 // features/doctorFindClinics/useUploadPaymentScreenshot.js
 import { useState } from 'react';
-import supabase from '../../services/supabase';
+import { supabase } from '../../lib/supabase'; // تأكد من مسار ال supabase client
 
 export function useUploadPaymentScreenshot() {
   const [isUploading, setIsUploading] = useState(false);
@@ -12,10 +12,10 @@ export function useUploadPaymentScreenshot() {
       // إنشاء اسم فريد للملف
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `payment-screenshots/${fileName}`;
+      const filePath = `${fileName}`; // إزالة المسار المكرر
 
       // رفع الملف إلى Supabase Storage
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('payment-screenshots') // اسم ال bucket
         .upload(filePath, file);
 
