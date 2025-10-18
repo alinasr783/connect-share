@@ -5,7 +5,7 @@ function DoctorAppLayout() {
   const links = [
     {to: "clinics", label: "Find a Clinic", icon: "ri-hospital-line"},
     {to: "bookings", label: "My Bookings", icon: "ri-calendar-line"},
-    {to: "payments", label: "Payments", icon: "ri-bank-card-line"},
+    // {to: "payments", label: "Payments", icon: "ri-bank-card-line"},
     {to: "settings", label: "Profile Settings", icon: "ri-settings-line"},
     {to: "support", label: "Help & Support", icon: "ri-question-line"},
   ];

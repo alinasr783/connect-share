@@ -1,48 +1,56 @@
 import supabase from "./supabase";
 
-export async function getDoctorTransactions(userId) {
-    const { data, error } = await supabase
+export async function getDoctorTransactions(userId = 'all') {
+    let query = supabase
         .from('doc_transactions')
         .select(`
             *,
             rentals!doc_transactions_rentalId_fkey(
                 *,
-                clinicId(name),
-                docId(fullName),
-                provId(fullName),
-                selected_pricing
+                clinicId(name, address),
+                docId(fullName, email),
+                provId(fullName)
             )`)
-        .eq('userId', userId)
         .order('created_at', { ascending: false });
 
+    if (userId !== 'all') {
+        query = query.eq('userId', userId);
+    }
+
+    const { data, error } = await query;
+
     if (error) {
-        console.error(error);
+        console.error('Error getting doctor transactions:', error);
         throw new Error('Error getting doctor transactions');
     }
 
-    return data;
+    return data || [];
 }
 
-export async function getDoctorTransactionsThisMonth(userId) {
+export async function getDoctorTransactionsThisMonth(userId = 'all') {
     const now = new Date();
     const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfCurrentMonth = new Date(now.getFullYear(),
-        now.getMonth() + 1, 0, 23, 59, 59, 999);
+    const endOfCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 
-    const { data, error } = await supabase
+    let query = supabase
         .from('doc_transactions')
         .select('*')
-        .eq('userId', userId)
         .gte('created_at', startOfCurrentMonth.toISOString())
         .lte('created_at', endOfCurrentMonth.toISOString())
         .order('created_at', { ascending: false });
 
+    if (userId !== 'all') {
+        query = query.eq('userId', userId);
+    }
+
+    const { data, error } = await query;
+
     if (error) {
-        console.error(error);
+        console.error('Error getting doctor transactions for this month:', error);
         throw new Error('Error getting doctor transactions for this month');
     }
 
-    return data;
+    return data || [];
 }
 
 export async function createProviderWithdrawalWithTransaction(withdrawalData) {
@@ -60,7 +68,7 @@ export async function createProviderWithdrawalWithTransaction(withdrawalData) {
         .single();
 
     if (withdrawalError) {
-        console.error(withdrawalError);
+        console.error('Error creating provider withdrawal:', withdrawalError);
         throw new Error('Error creating provider withdrawal');
     }
 
@@ -78,7 +86,7 @@ export async function createProviderWithdrawalWithTransaction(withdrawalData) {
         .single();
 
     if (transactionError) {
-        console.error(transactionError);
+        console.error('Error creating provider transaction:', transactionError);
         throw new Error('Error creating provider transaction');
     }
 
@@ -88,7 +96,7 @@ export async function createProviderWithdrawalWithTransaction(withdrawalData) {
     };
 }
 
-export async function getProviderTransactions(userId, options = {}) {
+export async function getProviderTransactions(userId = 'all', options = {}) {
     const {
         page = 1,
         pageSize = 10,
@@ -105,8 +113,12 @@ export async function getProviderTransactions(userId, options = {}) {
 
     let query = supabase
         .from('prov_transactions')
-        .select('*', { count: 'exact' })
-        .eq('userId', userId);
+        .select('*', { count: 'exact' });
+
+    if (userId !== 'all') {
+        query = query.eq('userId', userId);
+    }
+
     if (date) {
         const start = new Date(date);
         const end = new Date(date);
@@ -127,13 +139,12 @@ export async function getProviderTransactions(userId, options = {}) {
     }
 
     query = query.order(sortBy, { ascending: sortOrder === 'asc' });
-
     query = query.range(from, to);
 
     const { data, error, count } = await query;
 
     if (error) {
-        console.error(error);
+        console.error('Error getting provider transactions:', error);
         throw new Error('Error getting provider transactions');
     }
 
@@ -143,5 +154,63 @@ export async function getProviderTransactions(userId, options = {}) {
         page,
         pageSize,
         totalPages: Math.ceil((count || 0) / pageSize)
+    };
+}
+
+export async function updateTransactionStatus(transactionId, status, type = 'doctor') {
+    const table = type === 'doctor' ? 'doc_transactions' : 'prov_transactions';
+    
+    const { data, error } = await supabase
+        .from(table)
+        .update({ status })
+        .eq('id', transactionId)
+        .select()
+        .single();
+
+    if (error) {
+        console.error(`Error updating ${type} transaction status:`, error);
+        throw new Error(`Error updating ${type} transaction status`);
+    }
+
+    return data;
+}
+
+export async function getFinancialStats() {
+    const { data: doctorTransactions, error: doctorError } = await supabase
+        .from('doc_transactions')
+        .select('status, created_at, amount');
+
+    const { data: providerTransactions, error: providerError } = await supabase
+        .from('prov_transactions')
+        .select('amount, type, status, created_at');
+
+    if (doctorError || providerError) {
+        console.error('Error getting financial stats:', { doctorError, providerError });
+        throw new Error('Error getting financial stats');
+    }
+
+    const totalRevenue = doctorTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+    const monthlyRevenue = doctorTransactions
+        .filter(t => {
+            const transactionDate = new Date(t.created_at);
+            const now = new Date();
+            return transactionDate.getMonth() === now.getMonth() &&
+                transactionDate.getFullYear() === now.getFullYear();
+        })
+        .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+    const pendingPayouts = providerTransactions.filter(t => t.status === 'pending').length;
+    const totalPayouts = providerTransactions
+        .filter(t => t.type === 'withdrawal')
+        .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+    return {
+        totalRevenue,
+        monthlyRevenue,
+        pendingPayouts,
+        totalPayouts,
+        totalTransactions: doctorTransactions.length + providerTransactions.length,
+        completedTransactions: doctorTransactions.filter(t => t.status === 'completed').length +
+            providerTransactions.filter(t => t.status === 'completed').length
     };
 }

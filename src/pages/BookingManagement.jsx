@@ -1,8 +1,7 @@
-// features/adminClinics/ClinicsManagement.jsx
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { getClinics, updateClinicStatus, deleteClinic } from '../services/apiClinics';
+import { getAdminBookings, updateBooking } from '../services/apiBookings';
 import { toast } from 'react-hot-toast';
 
 function cn(...classes) {
@@ -21,7 +20,6 @@ const Badge = ({
     destructive: 'bg-red-500 text-white',
     outline: 'border border-gray-300 bg-white text-gray-700',
     success: 'bg-green-500 text-white',
-    warning: 'bg-yellow-500 text-white',
   };
 
   return (
@@ -51,7 +49,6 @@ const Button = ({
     ghost: 'hover:bg-gray-100',
     destructive: 'bg-red-500 text-white hover:bg-red-600',
     success: 'bg-green-500 text-white hover:bg-green-600',
-    warning: 'bg-yellow-500 text-white hover:bg-yellow-600',
   };
 
   const sizes = {
@@ -307,9 +304,10 @@ const Select = ({ value, onValueChange, children }) => {
 
 const SelectTrigger = ({ className, children, isOpen, setIsOpen, value, ...props }) => {
   const displayValue = value === 'all' ? 'All Status' : 
-                     value === 'active' ? 'Active' :
-                     value === 'unconfirmed' ? 'Unconfirmed' :
-                     value === 'suspended' ? 'Suspended' : 'Filter by status';
+                     value === 'confirmed' ? 'Confirmed' :
+                     value === 'pending' ? 'Pending' :
+                     value === 'completed' ? 'Completed' : 
+                     value === 'cancelled' ? 'Cancelled' : 'Filter by status';
 
   return (
     <button
@@ -437,13 +435,16 @@ const TabsContent = ({
   );
 };
 
-// Icon Components using remixicon
 const SearchIcon = ({ className }) => (
   <i className={cn('ri-search-line', className)} />
 );
 
-const BuildingIcon = ({ className }) => (
-  <i className={cn('ri-building-line', className)} />
+const CalendarIcon = ({ className }) => (
+  <i className={cn('ri-calendar-line', className)} />
+);
+
+const ClockIcon = ({ className }) => (
+  <i className={cn('ri-time-line', className)} />
 );
 
 const MapPinIcon = ({ className }) => (
@@ -454,8 +455,8 @@ const UserIcon = ({ className }) => (
   <i className={cn('ri-user-line', className)} />
 );
 
-const CalendarIcon = ({ className }) => (
-  <i className={cn('ri-calendar-line', className)} />
+const BuildingIcon = ({ className }) => (
+  <i className={cn('ri-building-line', className)} />
 );
 
 const CheckCircleIcon = ({ className }) => (
@@ -482,23 +483,9 @@ const EyeIcon = ({ className }) => (
   <i className={cn('ri-eye-line', className)} />
 );
 
-const EditIcon = ({ className }) => (
-  <i className={cn('ri-edit-line', className)} />
-);
-
-const MoneyIcon = ({ className }) => (
-  <i className={cn('ri-money-dollar-circle-line', className)} />
-);
-
-const StarIcon = ({ className }) => (
-  <i className={cn('ri-star-line', className)} />
-);
-
-const ClinicsManagement = () => {
+const BookingManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [districtFilter, setDistrictFilter] = useState('all');
-  const [specialtyFilter, setSpecialtyFilter] = useState('all');
   const [activeTab, setActiveTab] = useState('all');
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [page, setPage] = useState(1);
@@ -508,200 +495,215 @@ const ClinicsManagement = () => {
   const PAGE_SIZE = 10;
 
   const { 
-    data: clinicsData, 
+    data: bookingsData, 
     isLoading, 
     error,
     refetch
   } = useQuery({
-    queryKey: ['clinics', { 
+    queryKey: ['adminBookings', { page, status: statusFilter === 'all' ? '' : statusFilter }],
+    queryFn: () => getAdminBookings({ 
       page, 
-      status: statusFilter === 'all' ? '' : statusFilter,
-      district: districtFilter === 'all' ? '' : districtFilter,
-      specialty: specialtyFilter === 'all' ? '' : specialtyFilter
-    }],
-    queryFn: () => {
-      const filters = [];
-      if (statusFilter && statusFilter !== 'all') filters.push({ field: 'status', value: statusFilter });
-      if (districtFilter && districtFilter !== 'all') filters.push({ field: 'district', value: districtFilter });
-      if (specialtyFilter && specialtyFilter !== 'all') filters.push({ field: 'specialty', value: specialtyFilter });
-      return getClinics({ 
-        page, 
-        pageSize: PAGE_SIZE,
-        filters
-      });
-    },
+      pageSize: PAGE_SIZE,
+      filters: { 
+        status: statusFilter === 'all' ? '' : statusFilter 
+      } 
+    }),
   });
 
-  // NOTE: `getClinicStats` expects a clinicId. The previous code invoked it with
-  // no argument which caused console errors. Instead compute aggregate stats
-  // locally from the clinics list returned by `getClinics`.
-
-  const { mutate: updateStatus, isLoading: isUpdatingStatus } = useMutation({
-    mutationFn: ({ id, status }) => updateClinicStatus(id, status),
+  const { mutate: updateBookingMutation, isLoading: isUpdating } = useMutation({
+    mutationFn: ({ id, updateData }) => updateBooking({ id, updateData }),
     onSuccess: () => {
-      toast.success('Clinic status updated successfully');
-      queryClient.invalidateQueries(['clinics']);
-      queryClient.invalidateQueries(['clinic-stats']);
+      toast.success('Booking updated successfully');
+      queryClient.invalidateQueries(['adminBookings']);
     },
     onError: (error) => {
-      toast.error('Failed to update clinic status');
-      console.error('Error updating clinic status:', error);
+      toast.error('Failed to update booking');
+      console.error('Error updating booking:', error);
     },
   });
 
-  const { mutate: deleteClinicMutation, isLoading: isDeleting } = useMutation({
-    mutationFn: (id) => deleteClinic(id),
-    onSuccess: () => {
-      toast.success('Clinic deleted successfully');
-      queryClient.invalidateQueries(['clinics']);
-      queryClient.invalidateQueries(['clinic-stats']);
-    },
-    onError: (error) => {
-      toast.error('Failed to delete clinic');
-      console.error('Error deleting clinic:', error);
-    },
-  });
+  const bookings = bookingsData?.data || [];
+  const totalCount = bookingsData?.count || 0;
 
-  const clinics = clinicsData?.data || [];
-  const totalCount = clinicsData?.count || 0;
-
-  const stats = useMemo(() => {
-    const totals = {
-      total: totalCount || clinics.length,
-      active: 0,
-      unconfirmed: 0,
-      suspended: 0,
-      totalBookings: 0,
-      completedBookings: 0,
-      revenue: 0,
-      districts: 0,
-      specialties: 0,
-    };
-
-    if (!clinics || clinics.length === 0) return totals;
-
-    totals.active = clinics.filter(c => c.status === 'active').length;
-    totals.unconfirmed = clinics.filter(c => c.status === 'unconfirmed').length;
-    totals.suspended = clinics.filter(c => c.status === 'suspended').length;
-
-    const uniqueDistricts = new Set(clinics.map(c => c.district).filter(Boolean));
-    const uniqueSpecialties = new Set(clinics.map(c => c.specialty).filter(Boolean));
-
-    totals.districts = uniqueDistricts.size;
-    totals.specialties = uniqueSpecialties.size;
-
-    // totalBookings, completedBookings and revenue require additional queries.
-    // Keep them at 0 for now to avoid extra requests; they can be implemented
-    // later by calling `getClinicStats` per clinic or adding a dedicated
-    // aggregate endpoint.
-
-    return totals;
-  }, [clinics, totalCount]);
-
-  const filteredClinics = useMemo(() => {
-    if (!clinics) return [];
+  const filteredBookings = useMemo(() => {
+    if (!bookings) return [];
     
-    return clinics.filter(clinic => {
-      const clinicName = clinic.name || 'Unknown Clinic';
-      const ownerName = clinic.users?.fullName || 'Unknown Owner';
-      const address = clinic.address || '';
-      const district = clinic.district || '';
+    return bookings.filter(booking => {
+      const doctorName = booking.docId?.fullName || 'Unknown Doctor';
+      const providerName = booking.provId?.fullName || 'Unknown Provider';
+      const clinicName = booking.clinicId?.name || 'Unknown Clinic';
       
       const matchesSearch = 
+        doctorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        providerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         clinicName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ownerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        district.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        clinic.id.toString().includes(searchQuery);
+        booking.id.toString().includes(searchQuery);
 
-      const matchesTab = activeTab === 'all' || clinic.status === activeTab;
+      const matchesTab = activeTab === 'all' || booking.status === activeTab;
 
       return matchesSearch && matchesTab;
     });
-  }, [clinics, searchQuery, activeTab]);
+  }, [bookings, searchQuery, activeTab]);
+
+  const stats = useMemo(() => {
+    if (!bookings) return { 
+      total: 0, 
+      confirmed: 0, 
+      pending: 0, 
+      completed: 0, 
+      cancelled: 0, 
+      revenue: 0 
+    };
+    
+    const confirmed = bookings.filter(b => b.status === 'confirmed').length;
+    const pending = bookings.filter(b => b.status === 'pending').length;
+    const completed = bookings.filter(b => b.status === 'completed').length;
+    const cancelled = bookings.filter(b => b.status === 'cancelled').length;
+    
+    const revenue = bookings
+      .filter(b => b.status === 'completed' || b.status === 'confirmed')
+      .reduce((sum, b) => sum + (b.price || 0), 0);
+
+    return { 
+      total: totalCount, 
+      confirmed, 
+      pending, 
+      completed, 
+      cancelled, 
+      revenue 
+    };
+  }, [bookings, totalCount]);
 
   const statusConfig = {
-    active: { label: 'Active', variant: 'success', icon: CheckCircleIcon },
-    unconfirmed: { label: 'Unconfirmed', variant: 'warning', icon: AlertCircleIcon },
-    suspended: { label: 'Suspended', variant: 'destructive', icon: XCircleIcon },
+    confirmed: { label: 'Confirmed', variant: 'default', icon: CheckCircleIcon },
+    pending: { label: 'Pending', variant: 'secondary', icon: AlertCircleIcon },
+    cancelled: { label: 'Cancelled', variant: 'destructive', icon: XCircleIcon },
+    completed: { label: 'Completed', variant: 'success', icon: CheckCircleIcon },
+    unpaid: { label: 'Unpaid', variant: 'outline', icon: AlertCircleIcon }
   };
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     
     try {
+      if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        const [year, month, day] = dateString.split('-');
+        const date = new Date(year, month - 1, day);
+        
+        return date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+      }
+      
       const date = new Date(dateString);
+      
+      if (isNaN(date.getTime())) {
+        return dateString;
+      }
+      
       return date.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric'
       });
     } catch (error) {
+      return dateString;
+    }
+  };
+
+  const parseSelectedDate = (selectedDate) => {
+    if (!selectedDate) return 'N/A';
+    
+    try {
+      if (typeof selectedDate === 'string') {
+        try {
+          const parsed = JSON.parse(selectedDate);
+          return parseSelectedDate(parsed);
+        } catch {
+          return formatDate(selectedDate);
+        }
+      }
+      
+      if (selectedDate.days && Array.isArray(selectedDate.days)) {
+        return selectedDate.days
+          .map(day => formatDate(day))
+          .join(', ');
+      }
+      
+      if (selectedDate.date) {
+        return formatDate(selectedDate.date);
+      }
+      
+      if (Array.isArray(selectedDate)) {
+        return selectedDate
+          .map(day => formatDate(day))
+          .join(', ');
+      }
+      
+      if (typeof selectedDate === 'string') {
+        return formatDate(selectedDate);
+      }
+      
+      return 'No date selected';
+    } catch (error) {
+      console.error('Error parsing selected date:', error, selectedDate);
       return 'Invalid Date';
     }
   };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount || 0);
-  };
-
-  const getUniqueDistricts = useMemo(() => {
-    const districts = clinics.map(clinic => clinic.district).filter(Boolean);
-    return [...new Set(districts)];
-  }, [clinics]);
-
-  const getUniqueSpecialties = useMemo(() => {
-    const specialties = clinics.map(clinic => clinic.specialty).filter(Boolean);
-    return [...new Set(specialties)];
-  }, [clinics]);
-
-  const handleViewDetails = (clinic) => {
-    navigate(`/admin/clinics/${clinic.id}`);
-    setOpenDropdownId(null);
-  };
-
-  const handleStatusChange = (clinicId, newStatus) => {
-    updateStatus({ id: clinicId, status: newStatus });
-    setOpenDropdownId(null);
-  };
-
-  const handleDeleteClinic = (clinic) => {
-    if (window.confirm(`Are you sure you want to delete clinic "${clinic.name}"? This action cannot be undone.`)) {
-      deleteClinicMutation(clinic.id);
+  const parseSelectedHours = (selectedHours) => {
+    if (!selectedHours) return 'N/A';
+    
+    try {
+      if (typeof selectedHours === 'string') {
+        try {
+          const parsed = JSON.parse(selectedHours);
+          return parseSelectedHours(parsed);
+        } catch {
+          return selectedHours;
+        }
+      }
+      
+      if (selectedHours.startTime && selectedHours.endTime) {
+        return `${selectedHours.startTime} - ${selectedHours.endTime}`;
+      }
+      
+      if (selectedHours.start && selectedHours.end) {
+        return `${selectedHours.start} - ${selectedHours.end}`;
+      }
+      
+      if (Array.isArray(selectedHours)) {
+        return selectedHours.join(' - ');
+      }
+      
+      return 'No hours selected';
+    } catch (error) {
+      console.error('Error parsing selected hours:', error, selectedHours);
+      return 'Invalid Hours';
     }
+  };
+
+  const handleViewDetails = (booking) => {
+    navigate(`/admin/bookings/${booking.id}`);
     setOpenDropdownId(null);
   };
 
-  const handleDropdownToggle = (clinicId) => {
-    setOpenDropdownId(openDropdownId === clinicId ? null : clinicId);
+  const handleStatusChange = (bookingId, newStatus) => {
+    updateBookingMutation({ 
+      id: bookingId, 
+      updateData: { status: newStatus } 
+    });
+    setOpenDropdownId(null);
+  };
+
+  const handleDropdownToggle = (bookingId) => {
+    setOpenDropdownId(openDropdownId === bookingId ? null : bookingId);
   };
 
   const handleCloseDropdown = () => {
     setOpenDropdownId(null);
-  };
-
-  const getClinicImage = (clinic) => {
-    if (clinic.images && typeof clinic.images === 'string') {
-      try {
-        const parsedImages = JSON.parse(clinic.images);
-        if (Array.isArray(parsedImages) && parsedImages.length > 0) {
-          return parsedImages[0];
-        }
-      } catch (error) {
-        // If parsing fails, return the string as is
-        return clinic.images;
-      }
-    }
-    
-    if (clinic.images && Array.isArray(clinic.images) && clinic.images.length > 0) {
-      return clinic.images[0];
-    }
-    
-    // Default clinic image
-    return `https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=300&h=200&fit=crop`;
   };
 
   if (isLoading) {
@@ -710,7 +712,7 @@ const ClinicsManagement = () => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading clinics...</p>
+            <p className="mt-4 text-gray-600">Loading bookings...</p>
           </div>
         </div>
       </div>
@@ -722,7 +724,7 @@ const ClinicsManagement = () => {
       <div className="min-h-screen bg-gray-50 p-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center py-12 text-red-600">
-            <p>Error loading clinics: {error.message}</p>
+            <p>Error loading bookings: {error.message}</p>
             <Button 
               onClick={() => refetch()} 
               className="mt-4"
@@ -739,54 +741,46 @@ const ClinicsManagement = () => {
     <div className="min-h-screen bg-gray-50 p-6 space-y-6">
       <div className="flex flex-col gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Clinics Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Booking Management</h1>
           <p className="text-gray-600 mt-1">
-            Manage all medical clinics and their providers
+            Manage all clinic rental bookings between doctors and providers
           </p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <Card>
             <CardHeader className="pb-3">
-              <CardDescription>Total Clinics</CardDescription>
+              <CardDescription>Total Bookings</CardDescription>
               <CardTitle className="text-3xl">{stats.total}</CardTitle>
             </CardHeader>
           </Card>
           <Card>
             <CardHeader className="pb-3">
-              <CardDescription>Active</CardDescription>
-              <CardTitle className="text-3xl text-green-600">{stats.active}</CardTitle>
+              <CardDescription>Confirmed</CardDescription>
+              <CardTitle className="text-3xl text-blue-600">{stats.confirmed}</CardTitle>
             </CardHeader>
           </Card>
           <Card>
             <CardHeader className="pb-3">
-              <CardDescription>Unconfirmed</CardDescription>
-              <CardTitle className="text-3xl text-yellow-600">{stats.unconfirmed}</CardTitle>
+              <CardDescription>Pending</CardDescription>
+              <CardTitle className="text-3xl text-yellow-600">{stats.pending}</CardTitle>
             </CardHeader>
           </Card>
           <Card>
             <CardHeader className="pb-3">
-              <CardDescription>Districts</CardDescription>
-              <CardTitle className="text-3xl text-blue-600">{stats.districts}</CardTitle>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardDescription>Specialties</CardDescription>
-              <CardTitle className="text-3xl text-purple-600">{stats.specialties}</CardTitle>
+              <CardDescription>Completed</CardDescription>
+              <CardTitle className="text-3xl text-green-600">{stats.completed}</CardTitle>
             </CardHeader>
           </Card>
           <Card>
             <CardHeader className="pb-3">
               <CardDescription>Total Revenue</CardDescription>
-              <CardTitle className="text-3xl">{formatCurrency(stats.revenue)}</CardTitle>
+              <CardTitle className="text-3xl">${stats.revenue.toLocaleString()}</CardTitle>
             </CardHeader>
           </Card>
         </div>
       </div>
 
-      {/* Main Content */}
       <Card>
         <CardHeader>
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -794,50 +788,22 @@ const ClinicsManagement = () => {
               <div className="relative flex-1 max-w-md">
                 <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
                 <Input
-                  placeholder="Search by clinic name, owner, address, or district..."
+                  placeholder="Search by doctor, provider, clinic, or ID..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
                 />
               </div>
-              
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full sm:w-[180px]" />
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="unconfirmed">Unconfirmed</SelectItem>
-                  <SelectItem value="suspended">Suspended</SelectItem>
+                  <SelectItem value="confirmed">Confirmed</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
-
-              {getUniqueDistricts.length > 0 && (
-                <Select value={districtFilter} onValueChange={setDistrictFilter}>
-                  <SelectTrigger className="w-full sm:w-[180px]" />
-                  <SelectContent>
-                    <SelectItem value="all">All Districts</SelectItem>
-                    {getUniqueDistricts.map(district => (
-                      <SelectItem key={district} value={district}>
-                        {district}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-
-              {getUniqueSpecialties.length > 0 && (
-                <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
-                  <SelectTrigger className="w-full sm:w-[180px]" />
-                  <SelectContent>
-                    <SelectItem value="all">All Specialties</SelectItem>
-                    {getUniqueSpecialties.map(specialty => (
-                      <SelectItem key={specialty} value={specialty}>
-                        {specialty}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
             </div>
             <Button>
               <DownloadIcon className="h-4 w-4 mr-2" />
@@ -851,14 +817,17 @@ const ClinicsManagement = () => {
               <TabsTrigger value="all" active={activeTab === 'all'} onClick={() => setActiveTab('all')}>
                 All ({stats.total})
               </TabsTrigger>
-              <TabsTrigger value="active" active={activeTab === 'active'} onClick={() => setActiveTab('active')}>
-                Active ({stats.active})
+              <TabsTrigger value="confirmed" active={activeTab === 'confirmed'} onClick={() => setActiveTab('confirmed')}>
+                Confirmed ({stats.confirmed})
               </TabsTrigger>
-              <TabsTrigger value="unconfirmed" active={activeTab === 'unconfirmed'} onClick={() => setActiveTab('unconfirmed')}>
-                Unconfirmed ({stats.unconfirmed})
+              <TabsTrigger value="pending" active={activeTab === 'pending'} onClick={() => setActiveTab('pending')}>
+                Pending ({stats.pending})
               </TabsTrigger>
-              <TabsTrigger value="suspended" active={activeTab === 'suspended'} onClick={() => setActiveTab('suspended')}>
-                Suspended ({stats.suspended})
+              <TabsTrigger value="completed" active={activeTab === 'completed'} onClick={() => setActiveTab('completed')}>
+                Completed ({stats.completed})
+              </TabsTrigger>
+              <TabsTrigger value="cancelled" active={activeTab === 'cancelled'} onClick={() => setActiveTab('cancelled')}>
+                Cancelled ({stats.cancelled})
               </TabsTrigger>
             </TabsList>
 
@@ -867,71 +836,73 @@ const ClinicsManagement = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Booking ID</TableHead>
+                      <TableHead>Doctor</TableHead>
+                      <TableHead>Provider</TableHead>
                       <TableHead>Clinic</TableHead>
-                      <TableHead>Owner</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead>Specialty</TableHead>
+                      <TableHead>Date & Time</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Created</TableHead>
+                      <TableHead>Price</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredClinics.length === 0 ? (
+                    {filteredBookings.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                          No clinics found
+                        <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                          No bookings found
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredClinics.map((clinic) => {
-                        const StatusIcon = statusConfig[clinic.status]?.icon || AlertCircleIcon;
-                        const statusVariant = statusConfig[clinic.status]?.variant || 'secondary';
-                        const statusLabel = statusConfig[clinic.status]?.label || clinic.status;
+                      filteredBookings.map((booking) => {
+                        const StatusIcon = statusConfig[booking.status]?.icon || AlertCircleIcon;
+                        const statusVariant = statusConfig[booking.status]?.variant || 'secondary';
+                        const statusLabel = statusConfig[booking.status]?.label || booking.status;
+
+                        const doctorName = booking.docId?.fullName || 'Unknown Doctor';
+                        const providerName = booking.provId?.fullName || 'Unknown Provider';
+                        const clinicName = booking.clinicId?.name || 'Unknown Clinic';
+                        const clinicAddress = booking.clinicId?.address || 'No address';
 
                         return (
-                          <TableRow key={clinic.id}>
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <div className="relative">
-                                  <img
-                                    src={getClinicImage(clinic)}
-                                    alt={clinic.name}
-                                    className="h-12 w-12 rounded-lg object-cover"
-                                  />
-                                </div>
-                                <div>
-                                  <div className="font-medium">{clinic.name || 'Unnamed Clinic'}</div>
-                                  <div className="text-sm text-gray-500 flex items-center gap-1">
-                                    <MoneyIcon className="h-3 w-3" />
-                                    {clinic.pricingModel || 'N/A'}
-                                  </div>
-                                </div>
-                              </div>
-                            </TableCell>
+                          <TableRow key={booking.id}>
+                            <TableCell className="font-medium">BK-{booking.id.toString().padStart(3, '0')}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
                                   <UserIcon className="h-4 w-4 text-blue-600" />
                                 </div>
                                 <div>
-                                  <div className="font-medium">{clinic.users?.fullName || 'Unknown Owner'}</div>
-                                  <div className="text-xs text-gray-500">Provider</div>
+                                  <div className="font-medium">{doctorName}</div>
+                                  <div className="text-xs text-gray-500">Doctor</div>
                                 </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <BuildingIcon className="h-4 w-4 text-gray-500" />
+                                <span>{providerName}</span>
                               </div>
                             </TableCell>
                             <TableCell>
                               <div>
-                                <div className="font-medium">{clinic.district || 'N/A'}</div>
+                                <div className="font-medium">{clinicName}</div>
                                 <div className="text-xs text-gray-500 flex items-center gap-1">
                                   <MapPinIcon className="h-3 w-3" />
-                                  {clinic.address || 'No address'}
+                                  {clinicAddress}
                                 </div>
                               </div>
                             </TableCell>
                             <TableCell>
-                              <div className="text-sm">
-                                {clinic.specialty || 'General'}
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-1 text-sm">
+                                  <CalendarIcon className="h-3 w-3 text-gray-500 flex-shrink-0" />
+                                  <span className="truncate">{parseSelectedDate(booking.selected_date)}</span>
+                                </div>
+                                <div className="flex items-center gap-1 text-xs text-gray-500">
+                                  <ClockIcon className="h-3 w-3 flex-shrink-0" />
+                                  <span className="truncate">{parseSelectedHours(booking.selected_hours)}</span>
+                                </div>
                               </div>
                             </TableCell>
                             <TableCell>
@@ -940,41 +911,38 @@ const ClinicsManagement = () => {
                                 {statusLabel}
                               </Badge>
                             </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2 text-sm text-gray-600">
-                                <CalendarIcon className="h-4 w-4" />
-                                {formatDate(clinic.created_at)}
-                              </div>
+                            <TableCell className="font-semibold">
+                              {booking.price ? `$${booking.price}` : 'N/A'}
                             </TableCell>
                             <TableCell className="text-right">
                               <DropdownMenu>
-                                <DropdownMenuTrigger onClick={() => handleDropdownToggle(clinic.id)}>
+                                <DropdownMenuTrigger onClick={() => handleDropdownToggle(booking.id)}>
                                   <Button variant="ghost" size="icon">
                                     <MoreVerticalIcon className="h-4 w-4" />
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent 
-                                  open={openDropdownId === clinic.id}
+                                  open={openDropdownId === booking.id}
                                   onClose={handleCloseDropdown}
                                 >
-                                  <DropdownMenuItem onClick={() => handleViewDetails(clinic)}>
+                                  <DropdownMenuItem onClick={() => handleViewDetails(booking)}>
                                     <EyeIcon className="h-4 w-4 mr-2" />
                                     View Details
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleStatusChange(clinic.id, 'active')}>
+                                  <DropdownMenuItem onClick={() => handleStatusChange(booking.id, 'confirmed')}>
                                     <CheckCircleIcon className="h-4 w-4 mr-2" />
-                                    Activate Clinic
+                                    Confirm Booking
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleStatusChange(clinic.id, 'suspended')}>
-                                    <XCircleIcon className="h-4 w-4 mr-2" />
-                                    Suspend Clinic
+                                  <DropdownMenuItem onClick={() => handleStatusChange(booking.id, 'completed')}>
+                                    <CheckCircleIcon className="h-4 w-4 mr-2" />
+                                    Mark Completed
                                   </DropdownMenuItem>
                                   <DropdownMenuItem 
-                                    onClick={() => handleDeleteClinic(clinic)}
+                                    onClick={() => handleStatusChange(booking.id, 'cancelled')}
                                     className="text-red-600"
                                   >
                                     <XCircleIcon className="h-4 w-4 mr-2" />
-                                    Delete Clinic
+                                    Cancel Booking
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
@@ -990,7 +958,7 @@ const ClinicsManagement = () => {
               {totalCount > PAGE_SIZE && (
                 <div className="flex justify-between items-center mt-4">
                   <p className="text-sm text-gray-600">
-                    Showing {filteredClinics.length} of {totalCount} clinics
+                    Showing {filteredBookings.length} of {totalCount} bookings
                   </p>
                   <div className="flex gap-2">
                     <Button
@@ -1018,4 +986,4 @@ const ClinicsManagement = () => {
   );
 };
 
-export default ClinicsManagement;
+export default BookingManagement;

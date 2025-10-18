@@ -1,7 +1,7 @@
 import supabase from "./supabase";
 import { uploadSyndicateCard } from "./apiStorage";
 
-export async function signup({ fullName, email, userType, password, syndicateCardFile, specialties }) {
+export async function signup({ fullName, email, phone, userType, password, syndicateCardFile, specialties }) {
     try {
         // 1. Check if user already exists
         const { data: existingUser, error: userCheckError } = await supabase
@@ -23,7 +23,7 @@ export async function signup({ fullName, email, userType, password, syndicateCar
             fullName,
             userType,
             avatar: '',
-            phone: '',
+            phone: phone, // إضافة رقم الموبايل هنا
             medicalLicenseNumber: '',
             status: userType === 'doctor' ? 'inactive' : 'active', // Doctors start as inactive
         };
@@ -50,7 +50,7 @@ export async function signup({ fullName, email, userType, password, syndicateCar
             email,
             fullName,
             userType,
-            phone: '',
+            phone: phone, // إضافة رقم الموبايل هنا
             status: userType === 'doctor' ? 'inactive' : 'active', // Doctors start as inactive
         };
 
@@ -254,4 +254,3 @@ export async function updatePassword({ currentPassword, newPassword }) {
         throw new Error(error.message || 'An error occurred while updating password');
     }
 }
-

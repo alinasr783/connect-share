@@ -8,7 +8,7 @@ import useCreateWithdrawal from "./useCreateWithdrawal";
 import usePaymentMethods from "../settings/usePaymentMethods";
 
 function RequestWithdrawal() {
-  const [amount, setAmount] = useState(null);
+  const [amount, setAmount] = useState("");
   const [selectedMethodId, setSelectedMethodId] = useState("");
   const [amountError, setAmountError] = useState("");
 
@@ -38,28 +38,40 @@ function RequestWithdrawal() {
   }, [paymentMethods]);
 
   const handleAmountChange = (e) => {
-    const value = parseFloat(e.target.value) || 0;
-    const maxAmount = availableAmount;
-
+    const value = e.target.value;
+    setAmount(value);
+    
+    // تنظيف رسائل الخطأ عند تغيير القيمة
     setAmountError("");
 
-    if (value > maxAmount) {
-      setAmountError(
-        `Amount cannot exceed available balance of ${formatCurrency(maxAmount)}`
-      );
-      setAmount(value);
+    if (!value || value === "") {
       return;
     }
 
-    const validAmount = Math.min(Math.max(value, 0), maxAmount);
-    setAmount(validAmount);
+    const numericValue = parseFloat(value);
+    const maxAmount = availableAmount;
+
+    if (isNaN(numericValue) || numericValue < 0) {
+      setAmountError("Please enter a valid positive amount");
+      return;
+    }
+
+    if (numericValue > maxAmount) {
+      setAmountError(
+        `Amount cannot exceed available balance of ${formatCurrency(maxAmount)}`
+      );
+      return;
+    }
   };
 
   const isValidAmount = () => {
-    if (!amount || amount <= 0) return false;
-    if (amount > availableAmount) return false;
+    const numericAmount = parseFloat(amount) || 0;
+    
+    if (!amount || amount === "" || numericAmount <= 0) return false;
+    if (numericAmount > availableAmount) return false;
     if (!hasAvailableAmount) return false;
     if (amountError) return false;
+    if (!selectedMethodId) return false;
 
     return true;
   };
@@ -67,12 +79,15 @@ function RequestWithdrawal() {
   const handleWithdraw = () => {
     setAmountError("");
 
-    if (!amount || amount <= 0) {
+    const numericAmount = parseFloat(amount) || 0;
+
+    // التحقق من صحة المبلغ
+    if (!amount || amount === "" || numericAmount <= 0) {
       setAmountError("Please enter a valid amount");
       return;
     }
 
-    if (amount > availableAmount) {
+    if (numericAmount > availableAmount) {
       setAmountError(
         `Amount cannot exceed available balance of ${formatCurrency(
           availableAmount
@@ -86,10 +101,6 @@ function RequestWithdrawal() {
       return;
     }
 
-    if (amountError) {
-      return;
-    }
-
     const chosen = options.find(
       (o) => String(o.id) === String(selectedMethodId)
     );
@@ -98,20 +109,28 @@ function RequestWithdrawal() {
       return;
     }
 
+    console.log('🚀 Submitting withdrawal:', {
+      amount: numericAmount,
+      methodId: chosen.id,
+      methodType: chosen.type,
+      availableAmount
+    });
+
     createWithdrawal(
       {
-        amount,
+        amount: numericAmount,
         methodId: chosen.id,
         methodType: chosen.type,
       },
       {
         onSuccess: () => {
           toast.success("Withdrawal request submitted successfully!");
-          setAmount(null);
+          setAmount("");
+          setSelectedMethodId("");
         },
         onError: (error) => {
-          console.error("Withdrawal failed:", error);
-          toast.error("Withdrawal request failed. Please try again.");
+          console.error("❌ Withdrawal failed:", error);
+          toast.error(error.message || "Withdrawal request failed. Please try again.");
         },
       }
     );
@@ -119,7 +138,7 @@ function RequestWithdrawal() {
 
   const handleMaxAmount = () => {
     setAmountError("");
-    setAmount(availableAmount);
+    setAmount(availableAmount.toString());
   };
 
   function tryParse(json) {
@@ -168,7 +187,8 @@ function RequestWithdrawal() {
               type="button"
               onClick={handleMaxAmount}
               disabled={!hasAvailableAmount}
-              className="text-sm text-blue-600 hover:text-blue-800 disabled:text-gray-400 disabled:cursor-not-allowed">
+              className="text-sm text-blue-600 hover:text-blue-800 
+                disabled:text-gray-400 disabled:cursor-not-allowed">
               Use Max Amount
             </button>
           </div>
@@ -188,6 +208,7 @@ function RequestWithdrawal() {
               placeholder="0.00"
               min="0"
               max={availableAmount}
+              step="0.01"
               disabled={!hasAvailableAmount}
             />
           </div>
@@ -226,6 +247,7 @@ function RequestWithdrawal() {
           className="w-full">
           {isCreating ? (
             <>
+              <Spinner size="small" />
               <span>Processing...</span>
             </>
           ) : (

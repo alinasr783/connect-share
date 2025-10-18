@@ -8,7 +8,16 @@ function useAmountForWithdrawal() {
     const calculateAvailableAmount = () => {
         if (isLoadingRentals || isLoadingPayouts) return 0;
 
-        const availableAmount = totalEarnings - allPayoutsAmount;
+        // استخدام القيمة المطلقة للمبالغ المسحوبة
+        const totalPayouts = Math.abs(allPayoutsAmount);
+        const availableAmount = totalEarnings - totalPayouts;
+
+        console.log('💰 Available Amount Calculation:', {
+            totalEarnings,
+            allPayoutsAmount,
+            totalPayouts: Math.abs(allPayoutsAmount),
+            availableAmount
+        });
 
         return Math.max(availableAmount, 0);
     };

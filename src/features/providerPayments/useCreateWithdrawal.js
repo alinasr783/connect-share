@@ -15,15 +15,26 @@ function useCreateWithdrawal() {
                 throw new Error("User not authenticated");
             }
 
+            console.log('💳 Creating withdrawal with:', {
+                userId: user?.id,
+                amount: amount, // إرسال القيمة الموجبة فقط
+                payment_method: methodType,
+                method_id: methodId,
+                status: 'pending'
+            });
+
             return createProviderWithdrawalWithTransaction({
                 userId: user?.id,
-                amount: -amount,
+                amount: amount, // إرسال القيمة الموجبة - سيتولى السيرفر تحويلها لسلبية
                 payment_method: methodType,
                 method_id: methodId,
                 status: 'pending'
             });
         },
-        onSuccess: () => {
+        onSuccess: (data) => {
+            console.log('✅ Withdrawal created successfully:', data);
+            
+            // تحديث جميع الاستعلامات ذات الصلة
             queryClient.invalidateQueries({
                 queryKey: ["provider-payouts", user?.id]
             });
@@ -35,9 +46,17 @@ function useCreateWithdrawal() {
             queryClient.invalidateQueries({
                 queryKey: ["provider-transactions", user?.id]
             });
+
+            queryClient.invalidateQueries({
+                queryKey: ["earnings", user?.id]
+            });
+
+            queryClient.invalidateQueries({
+                queryKey: ["payouts", user?.id]
+            });
         },
         onError: (error) => {
-            console.error("Withdrawal creation failed:", error);
+            console.error("❌ Withdrawal creation failed:", error);
         }
     });
 

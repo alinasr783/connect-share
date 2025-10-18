@@ -30,6 +30,12 @@ import ProtectedRoutes from "./ui/ProtectedRoutes";
 import RoleProtectedRoute from "./ui/RoleProtectedRoute";
 import AdminDoctorDetails from "./pages/AdminDoctorDetails";
 
+import UserManagement from "./pages/UserManagement";
+import BookingManagment from "./pages/BookingManagement";
+import UserProfile from "./pages/UserProfile";
+
+import FinancialManagement from "./pages/FinancialManagement";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -98,10 +104,14 @@ function AuthWrapper() {
             <Route index element={<Navigate to="bookings" />} />
             <Route path="clinics" element={<AdminClinics />} />
             <Route path="clinics/:id" element={<AdminClinicDetails />} />
-            <Route path="users" element={<AdminUsers />} />
+            <Route path="users"  element={<UserManagement />} />
             <Route path="doctors/:userId" element={<AdminDoctorDetails />} />
-            <Route path="bookings" element={<AdminBookings />} />
+            <Route path="user-management" element={<UserManagement />} />
+            <Route path="bookings" element={<BookingManagment />} />
             <Route path="bookings/:id" element={<AdminBookingDetails />} />
+            <Route path="booking-management" element={<BookingManagment />} />
+            <Route path="users/:id" element={<UserProfile/>} />
+            <Route path="financial-management" element={<FinancialManagement />} />
           </Route>
         </Route>
 

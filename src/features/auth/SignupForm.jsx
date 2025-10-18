@@ -88,10 +88,12 @@ function SignupForm() {
         const step1Valid =
           watch("fullName")?.trim() &&
           watch("email")?.trim() &&
+          watch("phone")?.trim() && // إضافة التحقق من رقم الموبايل
           watch("password")?.trim() &&
           watch("confirmPassword")?.trim() &&
           !errors.fullName &&
           !errors.email &&
+          !errors.phone && // إضافة التحقق من أخطاء رقم الموبايل
           !errors.password &&
           !errors.confirmPassword;
         return step1Valid;
@@ -118,7 +120,7 @@ function SignupForm() {
     }
   };
 
-  const onSubmit = async ({fullName, email, userType, password}) => {
+  const onSubmit = async ({fullName, email, phone, userType, password}) => { // إضافة phone هنا
     // Validate doctor-specific fields
     if (userType === "doctor") {
       if (!syndicateCardFile) {
@@ -138,6 +140,7 @@ function SignupForm() {
     signUp({
       fullName,
       email,
+      phone, 
       userType,
       password,
       syndicateCardFile: userType === "doctor" ? syndicateCardFile : undefined,
@@ -185,6 +188,36 @@ function SignupForm() {
                 })}
                 className={`input ${
                   errors.email ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+            </FormRow>
+
+            {/* إضافة حقل رقم الموبايل الإجباري */}
+            <FormRow 
+              label={
+                <span>
+                  Phone Number <span className="text-red-500">*</span>
+                  <span className="block text-sm text-gray-500 font-normal mt-1">
+                    Required for account verification and important notifications
+                  </span>
+                </span>
+              } 
+              errors={errors.phone}
+            >
+              <input
+                id="phone"
+                disabled={isSignUpPending}
+                type="tel"
+                placeholder="e.g., +201234567890"
+                {...register("phone", {
+                  required: "Phone number is required",
+                  pattern: {
+                    value: /^[\+]?[1-9][\d]{0,15}$/,
+                    message: "Please enter a valid phone number",
+                  },
+                })}
+                className={`input ${
+                  errors.phone ? "border-red-500" : "border-gray-300"
                 }`}
               />
             </FormRow>
