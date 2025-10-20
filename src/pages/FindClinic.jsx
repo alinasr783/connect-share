@@ -73,7 +73,7 @@ const PaymentPopup = ({ isOpen, onClose, onPaymentSubmit, isLoading }) => {
       id: "bank",
       name: "الحساب البنكي",
       icon: "ri-bank-line",
-      description: "تحويل بنكي مباشر"
+      description: "Account Number: 1155695010010201"
     },
     {
       id: "instapay",
@@ -85,7 +85,7 @@ const PaymentPopup = ({ isOpen, onClose, onPaymentSubmit, isLoading }) => {
       id: "ewallet",
       name: "المحفظة الإلكترونية",
       icon: "ri-wallet-3-line",
-      description: "محافظ إلكترونية مختلفة"
+      description: "01009003711"
     }
   ];
 
