@@ -5,7 +5,7 @@ import useUser from "../features/auth/useUser";
 import useCheckIfBooked from "../features/doctorFindClinics/useCheckIfBooked";
 import useCreateRental from "../features/doctorFindClinics/useCreactRental";
 import useFindClinic from "../features/doctorFindClinics/useFindClinic";
-import { useUploadPaymentScreenshot } from "../features/doctorFindClinics/useUploadPaymentScreenshot"; // ستحتاج لإنشاء هذا الهوك
+import { useUploadPaymentScreenshot } from "../features/doctorFindClinics/useUploadPaymentScreenshot";
 import Button from "../ui/Button";
 import ConfirmAction from "../ui/ConfirmAction";
 import DoctorStatusCheck from "../ui/DoctorStatusCheck";
@@ -15,7 +15,7 @@ import Spinner from "../ui/Spinner";
 import StatusBadge from "../ui/StatusBadge";
 import { formatDate } from "../utils/helpers";
 
-// Badge Component متوافق مع الثيم
+// Badge Component
 const Badge = ({ 
   variant = 'default',
   className,
@@ -41,7 +41,7 @@ const Badge = ({
   );
 };
 
-// Card Components متوافقة مع الثيم
+// Card Components
 const Card = ({ className, children, ...props }) => {
   return (
     <div
@@ -63,35 +63,38 @@ const CardContent = ({ className, children, ...props }) => {
 
 // Payment Methods Popup Component
 const PaymentPopup = ({ isOpen, onClose, onPaymentSubmit, isLoading }) => {
-  const [selectedMethod, setSelectedMethod] = useState("");
   const [screenshot, setScreenshot] = useState(null);
   const [screenshotPreview, setScreenshotPreview] = useState("");
+  const [paymentText, setPaymentText] = useState("");
   const fileInputRef = useRef(null);
 
-  const paymentMethods = [
-    {
-      id: "bank",
-      name: "الحساب البنكي",
-      icon: "ri-bank-line",
-      description: "Account Number: 1155695010010201"
+  const paymentDetails = {
+    bank: {
+      title: "Instapay or Bank Transfer",
+      details: [
+        "Bank Name: Arab African International Bank (AAIB)",
+        "Account Name: DID",
+        "Account Number: 1155695010010201", 
+        "IBAN: EG770057093101155695010010201",
+        "SWIFT Code: ARAIEGCXXXX"
+      ]
     },
-    {
-      id: "instapay",
-      name: "انستا باي",
-      icon: "ri-smartphone-line",
-      description: "تحويل فوري عبر التطبيق"
-    },
-    {
-      id: "ewallet",
-      name: "المحفظة الإلكترونية",
-      icon: "ri-wallet-3-line",
-      description: "01009003711"
+    mobile: {
+      title: "Mobile Wallet",
+      details: [
+        "+201009003711"
+      ]
     }
-  ];
+  };
 
   const handleScreenshotChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Check file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        alert("File size must be less than 5MB");
+        return;
+      }
       setScreenshot(file);
       const previewUrl = URL.createObjectURL(file);
       setScreenshotPreview(previewUrl);
@@ -107,25 +110,21 @@ const PaymentPopup = ({ isOpen, onClose, onPaymentSubmit, isLoading }) => {
   };
 
   const handleSubmit = () => {
-    if (!selectedMethod) {
-      alert("يرجى اختيار طريقة الدفع");
-      return;
-    }
     if (!screenshot) {
-      alert("يرجى رفع صورة إثبات التحويل");
+      alert("Please upload payment screenshot");
       return;
     }
 
     onPaymentSubmit({
-      paymentMethod: selectedMethod,
-      screenshot: screenshot
+      screenshot: screenshot,
+      payment_text: paymentText.trim()
     });
   };
 
   const handleClose = () => {
-    setSelectedMethod("");
     setScreenshot(null);
     setScreenshotPreview("");
+    setPaymentText("");
     onClose();
   };
 
@@ -133,7 +132,7 @@ const PaymentPopup = ({ isOpen, onClose, onPaymentSubmit, isLoading }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
@@ -142,8 +141,8 @@ const PaymentPopup = ({ isOpen, onClose, onPaymentSubmit, isLoading }) => {
                 <i className="ri-bank-card-line text-green-600 text-lg"></i>
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">إتمام عملية الدفع</h3>
-                <p className="text-gray-600">اختر طريقة الدفع وأرفق إثبات التحويل</p>
+                <h3 className="text-xl font-semibold text-gray-900">Complete Payment</h3>
+                <p className="text-gray-600">Choose payment method and upload proof</p>
               </div>
             </div>
             <button
@@ -156,51 +155,82 @@ const PaymentPopup = ({ isOpen, onClose, onPaymentSubmit, isLoading }) => {
         </div>
 
         {/* Payment Methods */}
-        <div className="p-6 space-y-4">
-          <h4 className="font-semibold text-gray-700">طرق الدفع المتاحة</h4>
-          <div className="space-y-3">
-            {paymentMethods.map((method) => (
-              <div
-                key={method.id}
-                className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                  selectedMethod === method.id
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-                onClick={() => setSelectedMethod(method.id)}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`h-12 w-12 rounded-lg flex items-center justify-center ${
-                    selectedMethod === method.id ? "bg-blue-100" : "bg-gray-100"
-                  }`}>
-                    <i className={`${method.icon} text-xl ${
-                      selectedMethod === method.id ? "text-blue-600" : "text-gray-600"
-                    }`}></i>
-                  </div>
-                  <div className="flex-1">
-                    <h5 className="font-semibold text-gray-900">{method.name}</h5>
-                    <p className="text-sm text-gray-500">{method.description}</p>
-                  </div>
-                  {selectedMethod === method.id && (
-                    <i className="ri-check-line text-blue-600 text-xl"></i>
-                  )}
+        <div className="p-6 space-y-6">
+          {/* Bank Transfer Details */}
+          <div className="space-y-4">
+            <h4 className="font-semibold text-gray-700 text-lg">Payment Methods</h4>
+            
+            {/* Bank Transfer */}
+            <div className="border border-gray-200 rounded-lg p-4 bg-blue-50">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <i className="ri-bank-line text-blue-600 text-lg"></i>
+                </div>
+                <div>
+                  <h5 className="font-semibold text-gray-900 text-sm">{paymentDetails.bank.title}</h5>
                 </div>
               </div>
-            ))}
+              <div className="space-y-2 pl-13">
+                {paymentDetails.bank.details.map((detail, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <i className="ri-check-line text-green-500 text-sm"></i>
+                    <p className="text-sm text-gray-700 font-mono">{detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Mobile Wallet */}
+            <div className="border border-gray-200 rounded-lg p-4 bg-green-50">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+                  <i className="ri-smartphone-line text-green-600 text-lg"></i>
+                </div>
+                <div>
+                  <h5 className="font-semibold text-gray-900 text-sm">{paymentDetails.mobile.title}</h5>
+                </div>
+              </div>
+              <div className="space-y-2 pl-13">
+                {paymentDetails.mobile.details.map((detail, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <i className="ri-check-line text-green-500 text-sm"></i>
+                    <p className="text-sm text-gray-700 font-mono">{detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Reference (Optional) */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="font-semibold text-gray-700">Payment Reference (Optional)</h4>
+              <span className="text-xs text-gray-500">Transaction number or account reference</span>
+            </div>
+            <input
+              type="text"
+              value={paymentText}
+              onChange={(e) => setPaymentText(e.target.value)}
+              placeholder="Enter transaction number or account reference..."
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            />
           </div>
 
           {/* Screenshot Upload */}
           <div className="space-y-3">
-            <h4 className="font-semibold text-gray-700">إثبات عملية التحويل</h4>
+            <div className="flex items-center justify-between">
+              <h4 className="font-semibold text-gray-700">Payment Proof</h4>
+              <span className="text-xs text-gray-500">Required</span>
+            </div>
             
             {!screenshotPreview ? (
               <div
-                className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors"
+                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 transition-colors"
                 onClick={() => fileInputRef.current?.click()}
               >
-                <i className="ri-upload-cloud-line text-3xl text-gray-400 mb-3"></i>
-                <p className="text-gray-600 font-medium">انقر لرفع صورة إثبات التحويل</p>
-                <p className="text-sm text-gray-500 mt-1">PNG, JPG, JPEG (الحد الأقصى 5MB)</p>
+                <i className="ri-upload-cloud-line text-4xl text-gray-400 mb-4"></i>
+                <p className="text-gray-600 font-medium text-lg">Click to upload payment screenshot</p>
+                <p className="text-sm text-gray-500 mt-2">PNG, JPG, JPEG (Max 5MB)</p>
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -211,20 +241,21 @@ const PaymentPopup = ({ isOpen, onClose, onPaymentSubmit, isLoading }) => {
               </div>
             ) : (
               <div className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-medium text-gray-700">الصورة المرفوعة</span>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-medium text-gray-700">Uploaded Screenshot</span>
                   <button
                     onClick={handleRemoveScreenshot}
-                    className="text-red-500 hover:text-red-700 transition-colors"
+                    className="text-red-500 hover:text-red-700 transition-colors flex items-center gap-2"
                   >
                     <i className="ri-delete-bin-line"></i>
+                    Remove
                   </button>
                 </div>
                 <div className="relative">
                   <img
                     src={screenshotPreview}
-                    alt="Screenshot preview"
-                    className="w-full h-48 object-cover rounded-lg"
+                    alt="Payment screenshot preview"
+                    className="w-full h-64 object-contain rounded-lg border border-gray-200"
                   />
                 </div>
               </div>
@@ -241,23 +272,23 @@ const PaymentPopup = ({ isOpen, onClose, onPaymentSubmit, isLoading }) => {
               onClick={handleClose}
               disabled={isLoading}
             >
-              إلغاء
+              Cancel
             </Button>
             <Button
               type="primary"
               className="flex-1"
               onClick={handleSubmit}
-              disabled={!selectedMethod || !screenshot || isLoading}
+              disabled={!screenshot || isLoading}
             >
               {isLoading ? (
                 <>
                   <Spinner size="small" className="mr-2" />
-                  جاري المعالجة...
+                  Processing...
                 </>
               ) : (
                 <>
                   <i className="ri-check-line mr-2"></i>
-                  تأكيد الدفع
+                  Confirm Payment
                 </>
               )}
             </Button>
@@ -355,6 +386,7 @@ function FindClinic() {
     setSelectedPricing(pricingType);
 
     let priceAmount = null;
+    const { pricing } = clinic;
     if (pricing) {
       switch (pricingType) {
         case "Hourly Rate":
@@ -379,17 +411,17 @@ function FindClinic() {
       return;
     }
     
-    if (availableHours && (!selectedStartTime || !selectedEndTime)) {
+    if (clinic.availableHours && (!selectedStartTime || !selectedEndTime)) {
       alert("Please select start and end times");
       return;
     }
     
-    if (availableHours && selectedStartTime >= selectedEndTime) {
+    if (clinic.availableHours && selectedStartTime >= selectedEndTime) {
       alert("End time must be after start time");
       return;
     }
     
-    if (pricing?.pricingModel === "standard" && !selectedPricing) {
+    if (clinic.pricing?.pricingModel === "standard" && !selectedPricing) {
       alert("Please select a pricing option");
       return;
     }
@@ -407,12 +439,12 @@ function FindClinic() {
       selected_date: {
         days: selectedDays.map((d) => formatDate(d, 'yyyy-MM-dd')),
       },
-      selected_hours: availableHours ? {
+      selected_hours: clinic.availableHours ? {
         startTime: selectedStartTime,
         endTime: selectedEndTime,
       } : null,
       selected_pricing:
-        pricing?.pricingModel === "standard" ? selectedPricing : null,
+        clinic.pricing?.pricingModel === "standard" ? selectedPricing : null,
     };
 
     setPendingRentalData(rentalData);
@@ -420,43 +452,42 @@ function FindClinic() {
     setShowPaymentPopup(true);
   };
 
-  // في دالة handlePaymentSubmit في FindClinic.jsx
-const handlePaymentSubmit = async (paymentData) => {
-  try {
-    // رفع الصورة إلى Supabase والحصول على الرابط
-    const screenshotUrl = await uploadScreenshot(paymentData.screenshot);
-    
-    // إنشاء الحجز مع رابط الصورة
-    const rentalWithImage = {
-      ...pendingRentalData,
-      image: screenshotUrl,
-      payment_method: paymentData.paymentMethod,
-      payment_status: 'pending' // إضافة حالة الدفع
-    };
+  const handlePaymentSubmit = async (paymentData) => {
+    try {
+      // Upload screenshot to Supabase and get the URL
+      const screenshotUrl = await uploadScreenshot(paymentData.screenshot);
+      
+      // Create booking with screenshot URL and payment text
+      const rentalWithPayment = {
+        ...pendingRentalData,
+        image: screenshotUrl,
+        payment_text: paymentData.payment_text || "",
+        payment_status: 'pending'
+      };
 
-    createRental(rentalWithImage, {
-      onSuccess: () => {
-        setShowPaymentPopup(false);
-        setSelectedDays([]);
-        setSelectedStartTime("");
-        setSelectedEndTime("");
-        setSelectedPricing("");
-        setSelectedPrice(null);
-        setPendingRentalData(null);
-        
-        // إظهار رسالة نجاح
-        alert('تم إرسال طلب الحجز بنجاح! سيتم المراجعة من قبل مالك العيادة.');
-      },
-      onError: (error) => {
-        console.error("Error creating rental:", error);
-        alert("فشل في إنشاء الحجز. يرجى المحاولة مرة أخرى.");
-      },
-    });
-  } catch (error) {
-    console.error("Error in payment process:", error);
-    alert(`فشل في رفع صورة التحويل: ${error.message}`);
-  }
-};
+      createRental(rentalWithPayment, {
+        onSuccess: () => {
+          setShowPaymentPopup(false);
+          setSelectedDays([]);
+          setSelectedStartTime("");
+          setSelectedEndTime("");
+          setSelectedPricing("");
+          setSelectedPrice(null);
+          setPendingRentalData(null);
+          
+          // Show success message
+          alert('Booking request sent successfully! It will be reviewed by the clinic owner.');
+        },
+        onError: (error) => {
+          console.error("Error creating rental:", error);
+          alert("Failed to create booking. Please try again.");
+        },
+      });
+    } catch (error) {
+      console.error("Error in payment process:", error);
+      alert(`Failed to upload payment screenshot: ${error.message}`);
+    }
+  };
 
   const handleCancel = () => {
     setShowConfirm(false);

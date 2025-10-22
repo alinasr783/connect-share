@@ -367,28 +367,3 @@ function calculatePaymentStatusBreakdown(bookings) {
   return breakdown;
 }
 
-
-// export async function getBookingStats(userId) {
-//   const { data, error } = await supabase
-//     .from("rentals")
-//     .select("status, price, payment_status")
-//     .or(`docId.eq.${userId},provId.eq.${userId}`);
-
-//   if (error) {
-//     console.error("Error getting booking stats:", error);
-//     throw new Error("Error getting booking stats");
-//   }
-
-//   const stats = {
-//     total: data.length,
-//     confirmed: data.filter(b => b.status === 'confirmed').length,
-//     pending: data.filter(b => b.status === 'pending').length,
-//     completed: data.filter(b => b.status === 'completed').length,
-//     cancelled: data.filter(b => b.status === 'cancelled').length,
-//     revenue: data
-//       .filter(b => (b.status === 'completed' || b.status === 'confirmed') && b.payment_status === 'paid')
-//       .reduce((sum, b) => sum + (b.price || 0), 0)
-//   };
-
-//   return stats;
-// }
