@@ -63,10 +63,7 @@ const CardContent = ({ className, children, ...props }) => {
 
 // Payment Methods Popup Component
 const PaymentPopup = ({ isOpen, onClose, onPaymentSubmit, isLoading }) => {
-  const [screenshot, setScreenshot] = useState(null);
-  const [screenshotPreview, setScreenshotPreview] = useState("");
   const [paymentText, setPaymentText] = useState("");
-  const fileInputRef = useRef(null);
 
   const paymentDetails = {
     bank: {
@@ -87,43 +84,33 @@ const PaymentPopup = ({ isOpen, onClose, onPaymentSubmit, isLoading }) => {
     }
   };
 
-  const handleScreenshotChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Check file size (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
-        alert("File size must be less than 5MB");
-        return;
-      }
-      setScreenshot(file);
-      const previewUrl = URL.createObjectURL(file);
-      setScreenshotPreview(previewUrl);
+  // WhatsApp sharing function
+  const handleShareToWhatsApp = () => {
+    // WhatsApp number
+    const whatsappNumber = "+201009003711"; // Replace with your WhatsApp number
+    
+    // Create a message with payment reference if available
+    let message = "Payment Screenshot";
+    if (paymentText.trim()) {
+      message += ` - Reference: ${paymentText.trim()}`;
     }
-  };
-
-  const handleRemoveScreenshot = () => {
-    setScreenshot(null);
-    setScreenshotPreview("");
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    
+    // Create WhatsApp URL
+    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+    
+    // Open WhatsApp in a new tab
+    window.open(whatsappUrl, '_blank');
   };
 
   const handleSubmit = () => {
-    if (!screenshot) {
-      alert("Please upload payment screenshot");
-      return;
-    }
-
+    // Since we're not uploading screenshot, we'll just submit the payment text
     onPaymentSubmit({
-      screenshot: screenshot,
-      payment_text: paymentText.trim()
+      payment_text: paymentText.trim(),
+      whatsapp_shared: true // Indicate that WhatsApp sharing was the method
     });
   };
 
   const handleClose = () => {
-    setScreenshot(null);
-    setScreenshotPreview("");
     setPaymentText("");
     onClose();
   };
@@ -142,7 +129,7 @@ const PaymentPopup = ({ isOpen, onClose, onPaymentSubmit, isLoading }) => {
               </div>
               <div>
                 <h3 className="text-xl font-semibold text-gray-900">Complete Payment</h3>
-                <p className="text-gray-600">Choose payment method and upload proof</p>
+                <p className="text-gray-600">Choose payment method and share proof via WhatsApp</p>
               </div>
             </div>
             <button
@@ -216,50 +203,34 @@ const PaymentPopup = ({ isOpen, onClose, onPaymentSubmit, isLoading }) => {
             />
           </div>
 
-          {/* Screenshot Upload */}
-          <div className="space-y-3">
+          {/* WhatsApp Share Section */}
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h4 className="font-semibold text-gray-700">Payment Proof</h4>
+              <h4 className="font-semibold text-gray-700">Share Payment Proof</h4>
               <span className="text-xs text-gray-500">Required</span>
             </div>
             
-            {!screenshotPreview ? (
-              <div
-                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 transition-colors"
-                onClick={() => fileInputRef.current?.click()}
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
+                <i className="ri-whatsapp-line text-green-600 text-3xl"></i>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Send Screenshot via WhatsApp</h3>
+              <p className="text-gray-600 mb-6">
+                After completing your payment, take a screenshot and share it directly through WhatsApp
+              </p>
+              
+              <button
+                onClick={handleShareToWhatsApp}
+                className="bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-xl flex items-center justify-center gap-3 transition-all duration-300 mx-auto shadow-lg hover:shadow-xl"
               >
-                <i className="ri-upload-cloud-line text-4xl text-gray-400 mb-4"></i>
-                <p className="text-gray-600 font-medium text-lg">Click to upload payment screenshot</p>
-                <p className="text-sm text-gray-500 mt-2">PNG, JPG, JPEG (Max 5MB)</p>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleScreenshotChange}
-                  accept="image/*"
-                  className="hidden"
-                />
-              </div>
-            ) : (
-              <div className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm font-medium text-gray-700">Uploaded Screenshot</span>
-                  <button
-                    onClick={handleRemoveScreenshot}
-                    className="text-red-500 hover:text-red-700 transition-colors flex items-center gap-2"
-                  >
-                    <i className="ri-delete-bin-line"></i>
-                    Remove
-                  </button>
-                </div>
-                <div className="relative">
-                  <img
-                    src={screenshotPreview}
-                    alt="Payment screenshot preview"
-                    className="w-full h-64 object-contain rounded-lg border border-gray-200"
-                  />
-                </div>
-              </div>
-            )}
+                <i className="ri-whatsapp-line text-2xl"></i>
+                <span className="text-lg font-semibold">Send Screenshot to WhatsApp</span>
+              </button>
+              
+              <p className="text-sm text-gray-500 mt-4">
+                Click the button above to open WhatsApp and send your payment screenshot
+              </p>
+            </div>
           </div>
         </div>
 
@@ -278,7 +249,7 @@ const PaymentPopup = ({ isOpen, onClose, onPaymentSubmit, isLoading }) => {
               type="primary"
               className="flex-1"
               onClick={handleSubmit}
-              disabled={!screenshot || isLoading}
+              disabled={isLoading}
             >
               {isLoading ? (
                 <>
@@ -774,7 +745,7 @@ function FindClinic() {
                               <i className="ri-time-line text-2xl text-blue-500 mb-2"></i>
                               <h5 className="font-semibold text-gray-900">Hourly Rate</h5>
                               <p className="text-2xl font-bold text-blue-600 mt-2">
-                                ${pricing.hourlyRate || 0}
+                                EGP {pricing.hourlyRate || 0}
                               </p>
                               <p className="text-sm text-gray-500 mt-1">per hour</p>
                             </div>
@@ -794,7 +765,7 @@ function FindClinic() {
                               <i className="ri-sun-line text-2xl text-green-500 mb-2"></i>
                               <h5 className="font-semibold text-gray-900">Daily Rate</h5>
                               <p className="text-2xl font-bold text-green-600 mt-2">
-                                ${pricing.dailyRate || 0}
+                                EGP {pricing.dailyRate || 0}
                               </p>
                               <p className="text-sm text-gray-500 mt-1">per day</p>
                             </div>
@@ -814,7 +785,7 @@ function FindClinic() {
                               <i className="ri-calendar-2-line text-2xl text-purple-500 mb-2"></i>
                               <h5 className="font-semibold text-gray-900">Monthly Rate</h5>
                               <p className="text-2xl font-bold text-purple-600 mt-2">
-                                ${pricing.monthlyRate || 0}
+                                EGP {pricing.monthlyRate || 0}
                               </p>
                               <p className="text-sm text-gray-500 mt-1">per month</p>
                             </div>
@@ -882,7 +853,7 @@ function FindClinic() {
                       <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                         <span className="text-gray-700 font-medium">{selectedPricing}</span>
                         <span className="text-2xl font-bold text-green-600">
-                          ${selectedPrice}
+                          EGP {selectedPrice}
                         </span>
                       </div>
                       <div className="text-center text-sm text-gray-500">

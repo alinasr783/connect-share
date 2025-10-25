@@ -2,7 +2,7 @@ const testimonialsData = [
   {
     id: 1,
     name: "Dr. Ali Nasr",
-    role: "Cardiologist",
+    role: "Implantologist",
     image: "https://i.ibb.co/pvdF3Nvc/download.jpg",
     testimonial: "This platform has revolutionized how I manage my practice. The flexibility and variety of locations are unmatched.",
     rating: 5
@@ -10,7 +10,7 @@ const testimonialsData = [
   {
     id: 2,
     name: "Dr. Ghaber Ahmed",
-    role: "Dermatologist",
+    role: "Endodontist",
     image: "https://i.ibb.co/R4Msrst2/download.jpg",
     testimonial: "Finding a clinic space used to be a hassle, but this service has made it incredibly easy and efficient.",
     rating: 5
@@ -18,7 +18,7 @@ const testimonialsData = [
   {
     id: 3,
     name: "Dr. Sarah Mohammed",
-    role: "Pediatrician",
+    role: "Cosmetic Dentist",
     image: "https://i.pravatar.cc/150?img=5",
     testimonial: "The seamless integration and professional support have transformed my patient management workflow completely.",
     rating: 4
@@ -128,11 +128,11 @@ function Testimonials() {
         {/* Stats */}
         <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
           <div className="text-center">
-            <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">50+</div>
+            <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">500+</div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Medical Professionals</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">100+</div>
+            <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">50+</div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Clinics Served</div>
           </div>
           <div className="text-center">
