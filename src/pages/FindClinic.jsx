@@ -5,7 +5,7 @@ import useUser from "../features/auth/useUser";
 import useCheckIfBooked from "../features/doctorFindClinics/useCheckIfBooked";
 import useCreateRental from "../features/doctorFindClinics/useCreactRental";
 import useFindClinic from "../features/doctorFindClinics/useFindClinic";
-import { useUploadPaymentScreenshot } from "../features/doctorFindClinics/useUploadPaymentScreenshot";
+import { useDiscount } from "../features/discount/useDiscount";
 import Button from "../ui/Button";
 import ConfirmAction from "../ui/ConfirmAction";
 import DoctorStatusCheck from "../ui/DoctorStatusCheck";
@@ -87,7 +87,7 @@ const PaymentPopup = ({ isOpen, onClose, onPaymentSubmit, isLoading }) => {
   // WhatsApp sharing function
   const handleShareToWhatsApp = () => {
     // WhatsApp number
-    const whatsappNumber = "+201009003711"; // Replace with your WhatsApp number
+    const whatsappNumber = "+201009003711";
     
     // Create a message with payment reference if available
     let message = "Payment Screenshot";
@@ -103,7 +103,7 @@ const PaymentPopup = ({ isOpen, onClose, onPaymentSubmit, isLoading }) => {
   };
 
   const handleSubmit = () => {
-    // Since we're not uploading screenshot, we'll just submit the payment text
+    // Submit payment text only, no screenshot upload
     onPaymentSubmit({
       payment_text: paymentText.trim(),
       whatsapp_shared: true // Indicate that WhatsApp sharing was the method
@@ -274,7 +274,7 @@ function FindClinic() {
   const { user } = useUser();
   const { clinic, isLoadingClinic, error: clinicError } = useFindClinic();
   const { createRental, isCreatingRental } = useCreateRental();
-  const { uploadScreenshot, isUploading } = useUploadPaymentScreenshot();
+  const { validateDiscount, isValidating } = useDiscount();
   
   const [showConfirm, setShowConfirm] = useState(false);
   const [showPaymentPopup, setShowPaymentPopup] = useState(false);
@@ -284,11 +284,221 @@ function FindClinic() {
   const [selectedPricing, setSelectedPricing] = useState("");
   const [selectedPrice, setSelectedPrice] = useState(null);
   const [pendingRentalData, setPendingRentalData] = useState(null);
+  
+  // حالة كود الخصم
+  const [discountCode, setDiscountCode] = useState("");
+  const [appliedDiscount, setAppliedDiscount] = useState(null);
+  const [discountError, setDiscountError] = useState("");
 
   const { rentals: bookedRentals, isLoadingRentals } = useCheckIfBooked(clinic?.id);
   
   const isBooked = bookedRentals && bookedRentals.length > 0;
 
+  // حساب السعر بعد الخصم
+  const calculateDiscountedPrice = () => {
+    if (!selectedPrice) return null;
+    
+    if (appliedDiscount) {
+      const discountAmount = (selectedPrice * appliedDiscount.percentage) / 100;
+      return selectedPrice - discountAmount;
+    }
+    
+    return selectedPrice;
+  };
+
+  const finalPrice = calculateDiscountedPrice();
+  const discountAmount = appliedDiscount ? selectedPrice - finalPrice : 0;
+
+  // تطبيق كود الخصم
+  const handleApplyDiscount = async () => {
+    if (!discountCode.trim()) {
+      setDiscountError("Please enter a discount code");
+      return;
+    }
+
+    try {
+      setDiscountError("");
+      validateDiscount(discountCode, {
+        onSuccess: (discountData) => {
+          setAppliedDiscount(discountData);
+          setDiscountError("");
+        },
+        onError: (error) => {
+          setDiscountError(error.message);
+          setAppliedDiscount(null);
+        }
+      });
+    } catch (error) {
+      setDiscountError("Failed to validate discount code");
+      setAppliedDiscount(null);
+    }
+  };
+
+  // إزالة الخصم
+  const handleRemoveDiscount = () => {
+    setAppliedDiscount(null);
+    setDiscountCode("");
+    setDiscountError("");
+  };
+
+  const handleStartTimeChange = (e) => {
+    const selectedTime = e.target.value;
+    if (!clinic?.availableHours) {
+      setSelectedStartTime(selectedTime);
+      return;
+    }
+    
+    const { availableHours } = clinic;
+    if (
+      selectedTime >= availableHours.startTime &&
+      selectedTime <= availableHours.endTime
+    ) {
+      setSelectedStartTime(selectedTime);
+      if (selectedEndTime && selectedTime >= selectedEndTime) {
+        setSelectedEndTime("");
+      }
+    }
+  };
+
+  const handleEndTimeChange = (e) => {
+    const selectedTime = e.target.value;
+    if (!clinic?.availableHours) {
+      setSelectedEndTime(selectedTime);
+      return;
+    }
+    
+    const { availableHours } = clinic;
+    if (
+      selectedTime >= availableHours.startTime &&
+      selectedTime <= availableHours.endTime
+    ) {
+      setSelectedEndTime(selectedTime);
+      if (selectedStartTime && selectedTime <= selectedStartTime) {
+        setSelectedStartTime("");
+      }
+    }
+  };
+
+  const handlePricingSelect = (pricingType) => {
+    setSelectedPricing(pricingType);
+
+    let priceAmount = null;
+    const { pricing } = clinic || {};
+    if (pricing) {
+      switch (pricingType) {
+        case "Hourly Rate":
+          priceAmount = pricing.hourlyRate || 0;
+          break;
+        case "Daily Rate":
+          priceAmount = pricing.dailyRate || 0;
+          break;
+        case "Monthly Rate":
+          priceAmount = pricing.monthlyRate || 0;
+          break;
+        default:
+          priceAmount = null;
+      }
+    }
+    setSelectedPrice(priceAmount);
+  };
+
+  const handleBookClick = () => {
+    if (!selectedDays.length) {
+      alert("Please select at least one available day");
+      return;
+    }
+    
+    if (clinic?.availableHours && (!selectedStartTime || !selectedEndTime)) {
+      alert("Please select start and end times");
+      return;
+    }
+    
+    if (clinic?.availableHours && selectedStartTime >= selectedEndTime) {
+      alert("End time must be after start time");
+      return;
+    }
+    
+    if (clinic?.pricing?.pricingModel === "standard" && !selectedPricing) {
+      alert("Please select a pricing option");
+      return;
+    }
+    
+    setShowConfirm(true);
+  };
+
+  const handleConfirm = () => {
+    if (!clinic) return;
+
+    const rentalData = {
+      clinicId: clinic.id,
+      docId: user?.id,
+      provId: clinic.userId,
+      status: "pending",
+      price: finalPrice || selectedPrice,
+      original_price: selectedPrice,
+      discount_code: appliedDiscount?.code,
+      discount_percentage: appliedDiscount?.percentage,
+      selected_date: {
+        days: selectedDays.map((d) => formatDate(d, 'yyyy-MM-dd')),
+      },
+      selected_hours: clinic.availableHours ? {
+        startTime: selectedStartTime,
+        endTime: selectedEndTime,
+      } : null,
+      selected_pricing:
+        clinic.pricing?.pricingModel === "standard" ? selectedPricing : null,
+    };
+
+    setPendingRentalData(rentalData);
+    setShowConfirm(false);
+    setShowPaymentPopup(true);
+  };
+
+  const handlePaymentSubmit = async (paymentData) => {
+    try {
+      // Create booking with payment text only (no screenshot upload)
+      const rentalWithPayment = {
+        ...pendingRentalData,
+        payment_text: paymentData.payment_text || "",
+        payment_status: 'pending',
+        whatsapp_shared: paymentData.whatsapp_shared || false
+      };
+
+      createRental(rentalWithPayment, {
+        onSuccess: () => {
+          setShowPaymentPopup(false);
+          setSelectedDays([]);
+          setSelectedStartTime("");
+          setSelectedEndTime("");
+          setSelectedPricing("");
+          setSelectedPrice(null);
+          setPendingRentalData(null);
+          setAppliedDiscount(null);
+          setDiscountCode("");
+          
+          // Show success message
+          alert('Booking request sent successfully! It will be reviewed by the clinic owner.');
+        },
+        onError: (error) => {
+          console.error("Error creating rental:", error);
+          alert("Failed to create booking. Please try again.");
+        },
+      });
+    } catch (error) {
+      console.error("Error in payment process:", error);
+      alert(`Failed to process payment: ${error.message}`);
+    }
+  };
+
+  const handleCancel = () => {
+    setShowConfirm(false);
+  };
+
+  const formatDateForDisplay = (date) => {
+    return formatDate(date);
+  };
+
+  // تحقق من وجود clinic قبل الوصول إلى خصائصه
   if (isLoadingClinic || isLoadingRentals) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -315,159 +525,7 @@ function FindClinic() {
     );
   }
 
-  const handleStartTimeChange = (e) => {
-    const selectedTime = e.target.value;
-    const { availableHours } = clinic;
-    
-    if (availableHours) {
-      if (
-        selectedTime >= availableHours.startTime &&
-        selectedTime <= availableHours.endTime
-      ) {
-        setSelectedStartTime(selectedTime);
-        if (selectedEndTime && selectedTime >= selectedEndTime) {
-          setSelectedEndTime("");
-        }
-      }
-    } else {
-      setSelectedStartTime(selectedTime);
-    }
-  };
-
-  const handleEndTimeChange = (e) => {
-    const selectedTime = e.target.value;
-    const { availableHours } = clinic;
-    
-    if (availableHours) {
-      if (
-        selectedTime >= availableHours.startTime &&
-        selectedTime <= availableHours.endTime
-      ) {
-        setSelectedEndTime(selectedTime);
-        if (selectedStartTime && selectedTime <= selectedStartTime) {
-          setSelectedStartTime("");
-        }
-      }
-    } else {
-      setSelectedEndTime(selectedTime);
-    }
-  };
-
-  const handlePricingSelect = (pricingType) => {
-    setSelectedPricing(pricingType);
-
-    let priceAmount = null;
-    const { pricing } = clinic;
-    if (pricing) {
-      switch (pricingType) {
-        case "Hourly Rate":
-          priceAmount = pricing.hourlyRate || 0;
-          break;
-        case "Daily Rate":
-          priceAmount = pricing.dailyRate || 0;
-          break;
-        case "Monthly Rate":
-          priceAmount = pricing.monthlyRate || 0;
-          break;
-        default:
-          priceAmount = null;
-      }
-    }
-    setSelectedPrice(priceAmount);
-  };
-
-  const handleBookClick = () => {
-    if (!selectedDays.length) {
-      alert("Please select at least one available day");
-      return;
-    }
-    
-    if (clinic.availableHours && (!selectedStartTime || !selectedEndTime)) {
-      alert("Please select start and end times");
-      return;
-    }
-    
-    if (clinic.availableHours && selectedStartTime >= selectedEndTime) {
-      alert("End time must be after start time");
-      return;
-    }
-    
-    if (clinic.pricing?.pricingModel === "standard" && !selectedPricing) {
-      alert("Please select a pricing option");
-      return;
-    }
-    
-    setShowConfirm(true);
-  };
-
-  const handleConfirm = () => {
-    const rentalData = {
-      clinicId: clinic.id,
-      docId: user?.id,
-      provId: clinic.userId,
-      status: "pending",
-      price: selectedPrice,
-      selected_date: {
-        days: selectedDays.map((d) => formatDate(d, 'yyyy-MM-dd')),
-      },
-      selected_hours: clinic.availableHours ? {
-        startTime: selectedStartTime,
-        endTime: selectedEndTime,
-      } : null,
-      selected_pricing:
-        clinic.pricing?.pricingModel === "standard" ? selectedPricing : null,
-    };
-
-    setPendingRentalData(rentalData);
-    setShowConfirm(false);
-    setShowPaymentPopup(true);
-  };
-
-  const handlePaymentSubmit = async (paymentData) => {
-    try {
-      // Upload screenshot to Supabase and get the URL
-      const screenshotUrl = await uploadScreenshot(paymentData.screenshot);
-      
-      // Create booking with screenshot URL and payment text
-      const rentalWithPayment = {
-        ...pendingRentalData,
-        image: screenshotUrl,
-        payment_text: paymentData.payment_text || "",
-        payment_status: 'pending'
-      };
-
-      createRental(rentalWithPayment, {
-        onSuccess: () => {
-          setShowPaymentPopup(false);
-          setSelectedDays([]);
-          setSelectedStartTime("");
-          setSelectedEndTime("");
-          setSelectedPricing("");
-          setSelectedPrice(null);
-          setPendingRentalData(null);
-          
-          // Show success message
-          alert('Booking request sent successfully! It will be reviewed by the clinic owner.');
-        },
-        onError: (error) => {
-          console.error("Error creating rental:", error);
-          alert("Failed to create booking. Please try again.");
-        },
-      });
-    } catch (error) {
-      console.error("Error in payment process:", error);
-      alert(`Failed to upload payment screenshot: ${error.message}`);
-    }
-  };
-
-  const handleCancel = () => {
-    setShowConfirm(false);
-  };
-
-  const formatDateForDisplay = (date) => {
-    return formatDate(date);
-  };
-
+  // استخراج الخصائص بعد التأكد من وجود clinic
   const {
     name,
     address,
@@ -850,15 +908,94 @@ function FindClinic() {
                 <CardContent>
                   {selectedPricing && selectedPrice ? (
                     <div className="space-y-4">
+                      {/* السعر الأصلي */}
                       <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                        <span className="text-gray-700 font-medium">{selectedPricing}</span>
-                        <span className="text-2xl font-bold text-green-600">
-                          EGP {selectedPrice}
+                        <div>
+                          <span className="text-gray-700 font-medium">{selectedPricing}</span>
+                          {appliedDiscount && (
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="success" className="text-xs">
+                                -{appliedDiscount.percentage}% OFF
+                              </Badge>
+                              <span className="text-xs text-gray-500 line-through">
+                                EGP {selectedPrice}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <span className={`text-2xl font-bold ${appliedDiscount ? 'text-green-600' : 'text-gray-900'}`}>
+                          EGP {finalPrice}
                         </span>
                       </div>
-                      <div className="text-center text-sm text-gray-500">
-                        Selected pricing option
+
+                      {/* قسم كود الخصم */}
+                      <div className="space-y-3">
+                        {!appliedDiscount ? (
+                          <div className="space-y-2">
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={discountCode}
+                                onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                                placeholder="Enter discount code"
+                                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                disabled={isValidating}
+                              />
+                              <Button
+                                type="secondary"
+                                size="small"
+                                onClick={handleApplyDiscount}
+                                disabled={isValidating || !discountCode.trim()}
+                              >
+                                {isValidating ? <Spinner size="small" /> : "Apply"}
+                              </Button>
+                            </div>
+                            {discountError && (
+                              <p className="text-red-500 text-sm">{discountError}</p>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="bg-green-50 rounded-lg p-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <i className="ri-check-line text-green-500"></i>
+                                <span className="text-green-700 font-medium">
+                                  Discount applied: {appliedDiscount.code}
+                                </span>
+                              </div>
+                              <button
+                                onClick={handleRemoveDiscount}
+                                className="text-red-500 hover:text-red-700 text-sm"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                            {discountAmount > 0 && (
+                              <p className="text-green-600 text-sm mt-1">
+                                You saved EGP {discountAmount}
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </div>
+
+                      {/* تفاصيل الخصم */}
+                      {appliedDiscount && discountAmount > 0 && (
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between text-gray-600">
+                            <span>Original Price:</span>
+                            <span>EGP {selectedPrice}</span>
+                          </div>
+                          <div className="flex justify-between text-green-600">
+                            <span>Discount ({appliedDiscount.percentage}%):</span>
+                            <span>- EGP {discountAmount}</span>
+                          </div>
+                          <div className="flex justify-between font-semibold text-lg border-t pt-2">
+                            <span>Final Price:</span>
+                            <span className="text-green-600">EGP {finalPrice}</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="text-center py-8">
@@ -974,7 +1111,7 @@ function FindClinic() {
           isOpen={showPaymentPopup}
           onClose={() => setShowPaymentPopup(false)}
           onPaymentSubmit={handlePaymentSubmit}
-          isLoading={isCreatingRental || isUploading}
+          isLoading={isCreatingRental}
         />
       </div>
     </DoctorStatusCheck>
