@@ -69,6 +69,32 @@ export async function getAdminBookingDetails(id) {
 }
 
 export async function updateBooking({ id, updateData }) {
+    // Calculate new provider share based on platform fee percentage if price or platform fee changes
+    if (updateData.price || updateData.platform_fee_percentage !== undefined) {
+        const currentBooking = await supabase
+            .from("rentals")
+            .select("price, platform_fee_percentage")
+            .eq("id", id)
+            .single();
+
+        const price = updateData.price || currentBooking.data.price;
+        const platformFeePercentage = updateData.platform_fee_percentage !== undefined 
+            ? updateData.platform_fee_percentage 
+            : (currentBooking.data.platform_fee_percentage || 20);
+
+        // Calculate new provider share
+        const platformFee = price * (platformFeePercentage / 100);
+        const providerShare = price - platformFee;
+
+        // Add calculated fields to update data
+        updateData = {
+            ...updateData,
+            platform_fee_percentage: platformFeePercentage,
+            provider_share: providerShare,
+            platform_fee: platformFee
+        };
+    }
+
     const { data, error } = await supabase
         .from("rentals")
         .update(updateData)

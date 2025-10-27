@@ -179,7 +179,11 @@ export async function getProviderTransactions(userId = 'all', options = {}) {
 
     let query = supabase
         .from('prov_transactions')
-        .select('*', { count: 'exact' });
+        .select(`
+            *,
+            user:users!prov_transactions_userId_fkey(fullName, email, userId),
+            method:payment_methods!prov_transactions_method_id_fkey(type, end_numbers, method_details)
+        `, { count: 'exact' });
 
     if (userId !== 'all') {
         query = query.eq('userId', userId);
@@ -348,57 +352,214 @@ export async function updatePayoutStatus(payoutId, status) {
 export async function getFinancialStats() {
     console.log('📈 getFinancialStats called');
     
-    console.log('🔄 Fetching doctor transactions...');
-    const { data: doctorTransactions, error: doctorError } = await supabase
-        .from('doc_transactions')
-        .select('status, created_at, amount');
+    // Get completed rentals with their fees
+    const { data: rentals, error: rentalsError } = await supabase
+      .from('rentals')
+      .select(`
+        id,
+        price,
+        status,
+        platform_fee_percentage,
+        provider_share,
+        platform_fee,
+        created_at,
+        payment_status
+      `)
+      .eq('status', 'completed')
+      .eq('payment_status', 'paid');
 
-    console.log('🔄 Fetching provider transactions...');
-    const { data: providerTransactions, error: providerError } = await supabase
-        .from('prov_transactions')
-        .select('amount, type, status, created_at');
+    // Get current platform fee from settings
+    const { data: feeSettings } = await supabase
+      .from('settings')
+      .select('value')
+      .eq('key', 'platform_fee')
+      .single();
 
-    console.log('🔄 Fetching payouts...');
-    const { data: payouts, error: payoutsError } = await supabase
-        .from('payouts')
-        .select('amount, status');
-
-    if (doctorError || providerError || payoutsError) {
-        console.error('❌ Error getting financial stats:', { doctorError, providerError, payoutsError });
+    if (rentalsError) {
+        console.error('❌ Error getting rentals:', rentalsError);
         throw new Error('Error getting financial stats');
     }
 
-    console.log('📊 Raw data counts:', {
-        doctorTransactions: doctorTransactions?.length,
-        providerTransactions: providerTransactions?.length,
-        payouts: payouts?.length
-    });
+    const currentPlatformFee = feeSettings?.value || 20;
 
-    const totalRevenue = doctorTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
-    const monthlyRevenue = doctorTransactions
-        .filter(t => {
-            const transactionDate = new Date(t.created_at);
-            const now = new Date();
-            return transactionDate.getMonth() === now.getMonth() &&
-                transactionDate.getFullYear() === now.getFullYear();
-        })
-        .reduce((sum, t) => sum + (t.amount || 0), 0);
+    // Calculate totals
+    const totalRevenue = rentals.reduce((sum, rental) => sum + (rental.price || 0), 0);
+    
+    // Calculate monthly revenue
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const monthlyRentals = rentals.filter(rental => 
+        new Date(rental.created_at) >= new Date(startOfMonth)
+    );
+    const monthlyRevenue = monthlyRentals.reduce((sum, rental) => sum + (rental.price || 0), 0);
 
-    const pendingPayouts = payouts.filter(t => t.status === 'pending').length;
-    const totalPayouts = payouts.reduce((sum, t) => sum + (Math.abs(t.amount) || 0), 0);
+    // Calculate platform fees (commission)
+    const platformFees = rentals.reduce((sum, rental) => 
+        sum + (rental.platform_fee || (rental.price * (rental.platform_fee_percentage || currentPlatformFee) / 100)), 
+        0
+    );
+
+    // Calculate provider payouts
+    const providerPayouts = rentals.reduce((sum, rental) => 
+        sum + (rental.provider_share || (rental.price * (100 - (rental.platform_fee_percentage || currentPlatformFee)) / 100)),
+        0
+    );
 
     const stats = {
         totalRevenue,
         monthlyRevenue,
-        pendingPayouts,
-        totalPayouts,
-        totalTransactions: doctorTransactions.length + providerTransactions.length,
-        completedTransactions: doctorTransactions.filter(t => t.status === 'completed').length +
-            providerTransactions.filter(t => t.status === 'completed').length
+        platformFees,
+        providerPayouts,
+        totalBookings: rentals.length,
+        platformFeePercentage: currentPlatformFee,
+        completedBookings: rentals.length
     };
 
     console.log('✅ Financial stats calculated:', stats);
     return stats;
+}
+
+export async function getBookingAnalytics() {
+    console.log('📈 Getting booking analytics...');
+    
+    // Get completed rentals with their fees
+    const { data: rentals, error: rentalsError } = await supabase
+        .from('rentals')
+        .select(`
+            id,
+            price,
+            status,
+            platform_fee_percentage,
+            provider_share,
+            platform_fee,
+            created_at,
+            payment_status
+        `)
+        .order('created_at', { ascending: false });
+
+    if (rentalsError) {
+        console.error('❌ Error getting booking analytics:', rentalsError);
+        throw new Error('Error getting booking analytics');
+    }
+
+    // Get current platform fee from settings
+    const { data: feeSettings } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('key', 'platform_fee')
+        .single();
+
+    const currentPlatformFee = feeSettings?.value || 20;
+
+    // Calculate analytics
+    const completedPaidRentals = rentals.filter(r => 
+        r.status === 'completed' && r.payment_status === 'paid'
+    );
+
+    const totalRevenue = completedPaidRentals.reduce((sum, rental) => 
+        sum + (rental.price || 0), 0
+    );
+    
+    // Calculate monthly revenue
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const monthlyRentals = completedPaidRentals.filter(rental => 
+        new Date(rental.created_at) >= new Date(monthStart)
+    );
+    const monthlyRevenue = monthlyRentals.reduce((sum, rental) => 
+        sum + (rental.price || 0), 0
+    );
+
+    // Calculate commission and payouts
+    const commission = completedPaidRentals.reduce((sum, rental) => 
+        sum + (rental.platform_fee || (rental.price * (rental.platform_fee_percentage || currentPlatformFee) / 100)), 
+        0
+    );
+
+    const pendingPayouts = rentals
+        .filter(r => r.status === 'completed' && r.payment_status === 'paid')
+        .reduce((sum, rental) => 
+            sum + (rental.provider_share || (rental.price * (100 - (rental.platform_fee_percentage || currentPlatformFee)) / 100)),
+            0
+        );
+
+    return {
+        totalRevenue,
+        monthlyRevenue,
+        commission,
+        pendingPayouts,
+        platformFeePercentage: currentPlatformFee,
+        totalBookings: rentals.length,
+        completedBookings: rentals.filter(r => r.status === 'completed').length,
+        paidBookings: rentals.filter(r => r.payment_status === 'paid').length
+    };
+}
+
+export async function getBookingStats() {
+    console.log('📊 Getting booking stats...');
+    
+    const { data: rentals, error } = await supabase
+        .from('rentals')
+        .select('status, payment_status');
+
+    if (error) {
+        console.error('❌ Error getting booking stats:', error);
+        throw new Error('Error getting booking stats');
+    }
+
+    return {
+        total: rentals.length,
+        completed: rentals.filter(r => r.status === 'completed').length,
+        pending: rentals.filter(r => r.status === 'pending').length,
+        confirmed: rentals.filter(r => r.status === 'confirmed').length,
+        cancelled: rentals.filter(r => r.status === 'cancelled').length,
+        paid: rentals.filter(r => r.payment_status === 'paid').length,
+        unpaid: rentals.filter(r => r.payment_status === 'unpaid').length
+    };
+}
+
+export async function getRecentBookings(limit = 5) {
+    console.log('📋 Getting recent bookings...');
+    
+    const { data, error } = await supabase
+        .from('rentals')
+        .select(`
+            *,
+            docId:users!rentals_docId_fkey (fullName, email),
+            provId:users!rentals_provId_fkey (fullName),
+            clinicId:clinics (name, address)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+    if (error) {
+        console.error('❌ Error getting recent bookings:', error);
+        throw new Error('Error getting recent bookings');
+    }
+
+    return data;
+}
+
+// دالة لتحديث نسبة عمولة المنصة
+export async function updatePlatformFee(newFee) {
+    console.log('💰 Updating platform fee to:', newFee);
+    
+    const { data, error } = await supabase
+        .from('settings')
+        .upsert({ 
+            key: 'platform_fee',
+            value: newFee,
+            updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+    if (error) {
+        console.error('❌ Error updating platform fee:', error);
+        throw new Error('Error updating platform fee');
+    }
+
+    return data;
 }
 
 // دالة جديدة لإنشاء بيانات تجريبية (للتطوير فقط)

@@ -44,16 +44,26 @@ export async function getProviderRentals(userId, filters = [], page = 1) {
 }
 
 export async function createRental(rental) {
-    const { data, error } = await supabase
+    const totalAmount = rental.price;
+    const providerShare = totalAmount * 0.8; // Provider gets 80%
+    
+    // First create the rental record with provider share
+    const { data: rentalData, error: rentalError } = await supabase
         .from("rentals")
-        .insert([rental]);
+        .insert([{
+            ...rental,
+            price: providerShare, // Update the price to be 80% of original
+            original_price: totalAmount // Keep track of original price
+        }])
+        .select()
+        .single();
 
-    if (error) {
-        console.error(error);
+    if (rentalError) {
+        console.error('Error creating rental:', rentalError);
         throw new Error('Error creating rental');
     }
 
-    return data;
+    return rentalData;
 }
 
 export async function getProviderWithdrawals(userId) {

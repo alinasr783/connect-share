@@ -490,7 +490,8 @@ const BookingProfile = () => {
         status: booking.status || '',
         payment_status: booking.payment_status || '',
         selected_date: booking.selected_date ? JSON.stringify(booking.selected_date) : '',
-        selected_hours: booking.selected_hours ? JSON.stringify(booking.selected_hours) : ''
+        selected_hours: booking.selected_hours ? JSON.stringify(booking.selected_hours) : '',
+        platform_fee_percentage: booking.platform_fee_percentage || 20
       });
     }
   }, [booking, editOpen]);
@@ -696,10 +697,11 @@ const BookingProfile = () => {
 
   const calculateFinancials = () => {
     const total = booking?.price || 0;
-    const commission = total * 0.20; // 20% عمولة
+    const platformFeePercentage = booking?.platform_fee_percentage || 20;
+    const commission = total * (platformFeePercentage / 100);
     const hostPayout = total - commission;
     
-    return { total, commission, hostPayout };
+    return { total, commission, hostPayout, platformFeePercentage };
   };
 
   const getPaymentMethodText = (method) => {
@@ -900,7 +902,7 @@ const BookingProfile = () => {
                   <span className="font-semibold">{formatCurrency(financialData.total)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-500">Commission (20%)</span>
+                  <span className="text-sm text-gray-500">Platform Fee ({financialData.platformFeePercentage}%)</span>
                   <span className="font-semibold text-blue-600">{formatCurrency(financialData.commission)}</span>
                 </div>
                 <div className="flex justify-between">
@@ -1433,6 +1435,24 @@ const BookingProfile = () => {
                     <option value="refunded">Refunded</option>
                   </select>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Platform Fee Percentage
+                  </label>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      value={editForm.platform_fee_percentage}
+                      onChange={(e) => setEditForm({...editForm, platform_fee_percentage: e.target.value})}
+                      placeholder="Platform fee percentage"
+                      min="0"
+                      max="100"
+                      className="pr-8"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">%</span>
+                  </div>
+                </div>
+
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Selected Date (JSON)
