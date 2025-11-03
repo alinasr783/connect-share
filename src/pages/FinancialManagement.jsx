@@ -234,8 +234,13 @@ const DropdownMenu = ({ children }) => {
 };
 
 const DropdownMenuTrigger = ({ children, onClick, ...props }) => {
+  const handleClick = (e) => {
+    e.stopPropagation();
+    onClick?.(e);
+  };
+
   return (
-    <div onClick={onClick} className="cursor-pointer">
+    <div onClick={handleClick} className="cursor-pointer">
       {children}
     </div>
   );
@@ -256,12 +261,17 @@ const DropdownMenuContent = ({
       }
     };
 
+    let timer;
     if (open) {
-      document.addEventListener('mousedown', handleClickOutside);
+      // attach listener on next tick to avoid immediately catching the opening click
+      timer = setTimeout(() => {
+        document.addEventListener('click', handleClickOutside);
+      }, 0);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      clearTimeout(timer);
+      document.removeEventListener('click', handleClickOutside);
     };
   }, [open, onClose]);
 
