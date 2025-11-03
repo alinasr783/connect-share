@@ -122,19 +122,48 @@ export async function logout() {
 }
 
 export async function getCurrentUser() {
-    // Get the current session which includes user data
-    const { data: session, error } = await supabase.auth.getSession();
+    // Get the current authenticated user from the auth client
+    const { data: authUserData, error: authUserError } = await supabase.auth.getUser();
 
-    if (error) {
-        console.error('Session error:', error);
-        throw new Error('Error getting session: ' + error.message);
+    if (authUserError) {
+        console.error('Error getting auth user:', authUserError);
+        throw new Error('Error getting current user: ' + authUserError.message);
     }
 
-    // If no session, return null
-    if (!session?.session?.user) return null;
+    if (!authUserData?.user) return null;
 
-    // Return the user from the session (no need for additional API call)
-    return session.session.user;
+    const authUser = authUserData.user;
+
+    // Also fetch the users table record to get authoritative profile/status
+    try {
+        const { data: userRecord, error: userError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('userId', authUser.id)
+            .single();
+
+        if (userError && userError.code !== 'PGRST116') {
+            console.error('Error fetching users table record:', userError);
+        }
+
+        // Merge user metadata with users table values (users table takes precedence for status/userType)
+        const mergedUser = {
+            ...authUser,
+            user_metadata: {
+                ...authUser.user_metadata,
+                ...(userRecord ? {
+                    status: userRecord.status,
+                    userType: userRecord.userType,
+                    fullName: userRecord.fullName,
+                } : {})
+            }
+        };
+
+        return mergedUser;
+    } catch (err) {
+        console.error('Error merging user record:', err);
+        return authUser;
+    }
 }
 
 export async function updateCurrentUser({ fullName, phone, avatar, medicalLicenseNumber, specialties }) {
