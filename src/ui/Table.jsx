@@ -6,11 +6,8 @@ function Table({
 }) {
   const colPercents = getColPercents(columnTemplate);
   return (
-    <div
-      className={`bg-white rounded-2xl shadow-xs overflow-hidden ${className}`}>
-      <div
-        className="overflow-x-auto overflow-y-auto"
-        style={{maxHeight: maxHeight}}>
+    <div className={`bg-white rounded-2xl shadow-sm overflow-hidden ${className}`}>
+      <div className="overflow-x-auto overflow-y-auto" style={{maxHeight: maxHeight}}>
         <table className="w-full">
           {colPercents && (
             <colgroup>
@@ -27,12 +24,12 @@ function Table({
 }
 
 function TableHeader({children, className = ""}) {
-  return <thead className={`bg-gray-50 ${className}`}>{children}</thead>;
+  return <thead className={`bg-gray-50/70 ${className}`}>{children}</thead>;
 }
 
 function TableBody({children, className = ""}) {
   return (
-    <tbody className={`bg-white divide-y divide-gray-200 ${className}`}>
+    <tbody className={`bg-white divide-y divide-gray-100 ${className}`}>
       {children}
     </tbody>
   );
@@ -41,9 +38,7 @@ function TableBody({children, className = ""}) {
 function TableRow({children, className = "", onClick}) {
   return (
     <tr
-      className={`${
-        onClick ? "cursor-pointer hover:bg-gray-50" : ""
-      } ${className}`}
+      className={`${onClick ? "cursor-pointer hover:bg-gray-50" : ""} ${className}`}
       onClick={onClick}>
       {children}
     </tr>
@@ -52,9 +47,7 @@ function TableRow({children, className = "", onClick}) {
 
 function TableHead({children, className = ""}) {
   return (
-    <th
-      className={`px-6 py-4 text-left text-xs font-medium 
-        text-gray-500 uppercase tracking-wider first:w-28 first:px-4 ${className}`}>
+    <th className={`px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider first:w-28 first:px-4 ${className}`}>
       {children}
     </th>
   );
@@ -62,9 +55,7 @@ function TableHead({children, className = ""}) {
 
 function TableCell({children, className = ""}) {
   return (
-    <td
-      className={`px-6 py-4 whitespace-nowrap text-sm 
-        text-gray-900 first:w-28 first:px-4 ${className}`}>
+    <td className={`px-6 py-4 whitespace-nowrap text-sm text-gray-900 first:w-28 first:px-4 ${className}`}>
       {children}
     </td>
   );
@@ -73,9 +64,7 @@ function TableCell({children, className = ""}) {
 function TableEmpty({message = "No data available", className = ""}) {
   return (
     <tr>
-      <td
-        colSpan="100%"
-        className={`px-6 py-12 text-center text-gray-500 ${className}`}>
+      <td colSpan="100%" className={`px-6 py-12 text-center text-gray-500 ${className}`}>
         {message}
       </td>
     </tr>

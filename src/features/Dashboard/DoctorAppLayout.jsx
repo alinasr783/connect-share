@@ -14,8 +14,10 @@ function DoctorAppLayout() {
     <div className="flex h-screen w-screen">
       <Sidebar links={links} />
 
-      <main className="flex-1 p-6 overflow-y-auto bg-gray-100">
-        <Outlet />
+      <main className="flex-1 p-6 overflow-y-auto bg-gray-100/80">
+        <div className="max-w-7xl mx-auto">
+          <Outlet />
+        </div>
       </main>
     </div>
   );

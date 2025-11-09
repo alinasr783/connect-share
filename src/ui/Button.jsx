@@ -20,19 +20,19 @@ function Button({
     icon: ` ${sizeStyles[size]} rounded-full w-10 h-10 flex items-center justify-center
       cursor-pointer hover:bg-gray-200 border border-gray-300 ${className}`,
 
-    primary: ` ${sizeStyles[size]} bg-primary text-white rounded-xl 
-              hover:bg-primary/80 transition-colors 
-              duration-300 cursor-pointer inline-block disabled:cursor-not-allowed 
-              disabled:opacity-50 ${className}`,
+    primary: ` ${sizeStyles[size]} bg-primary text-white rounded-full 
+              hover:bg-primary/90 active:bg-primary/80 transition-all 
+              duration-200 cursor-pointer inline-block disabled:cursor-not-allowed 
+              disabled:opacity-50 shadow-sm hover:shadow-md ${className}`,
 
-    secondary: ` ${sizeStyles[size]} bg-gray-100 border border-gray-300 text-gray-700 rounded-xl 
-              hover:bg-gray-100 transition-colors 
-              duration-300 cursor-pointer inline-block disabled:cursor-not-allowed 
-              disabled:opacity-50 ${className}`,
+    secondary: ` ${sizeStyles[size]} bg-white border border-gray-300 text-gray-700 rounded-full 
+              hover:bg-gray-50 active:bg-gray-100 transition-all 
+              duration-200 cursor-pointer inline-block disabled:cursor-not-allowed 
+              disabled:opacity-50 shadow-sm hover:shadow-md ${className}`,
 
-    link: ` ${sizeStyles[size]} bg-transparent rounded-xl text-primary 
-              hover:text-primary/70 transition-colors
-              duration-300 cursor-pointer inline-block ${className}`,
+    link: ` ${sizeStyles[size]} bg-transparent rounded-full text-primary 
+              hover:text-primary/80 transition-colors
+              duration-200 cursor-pointer inline-block ${className}`,
   };
 
   if (to) {

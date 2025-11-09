@@ -181,7 +181,7 @@ export async function getProviderTransactions(userId = 'all', options = {}) {
         .from('prov_transactions')
         .select(`
             *,
-            user:users!prov_transactions_userId_fkey(fullName, email, userId),
+            user:users!prov_transactions_userId_fkey(fullName, email, userId, phone),
             method:payment_methods!prov_transactions_method_id_fkey(type, end_numbers, method_details)
         `, { count: 'exact' });
 

@@ -68,14 +68,15 @@ function LoginBtns() {
         {/* User Avatar and Name */}
         <div className="flex items-center gap-3">
           <div
-            className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 
-              via-purple-500 to-pink-500 flex items-center justify-center text-white 
-              font-bold text-sm shadow-lg ring-2 ring-white ring-offset-2 ring-offset-gray-100">
+            className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm shadow-lg ring-2 ring-white ring-offset-2 ring-offset-gray-100">
             {user.user_metadata?.avatar ? (
               <img
                 src={user.user_metadata.avatar}
                 alt={getUserDisplayName()}
                 className="w-full h-full rounded-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
               />
             ) : (
               getUserInitials()
@@ -95,12 +96,10 @@ function LoginBtns() {
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex items-center justify-center w-7 h-7 rounded-full 
-              bg-gray-100 hover:bg-gray-200 text-gray-600 
-                hover:text-gray-800 transition-all duration-200 shadow-sm hover:shadow-md">
+            className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 transition-all duration-200 shadow-sm hover:shadow-md">
             <i
-              className={`ri-arrow-down-s-line text-sm transition-transform duration-200 ${
-                isDropdownOpen ? "rotate-180" : ""
+              className={`ri-more-2-fill text-sm transition-transform duration-200 ${
+                isDropdownOpen ? "rotate-90" : ""
               }`}></i>
           </button>
 
@@ -118,13 +117,9 @@ function LoginBtns() {
               <div className="py-2">
                 <Link
                   to={getDashboardPath()}
-                  className="flex items-center gap-3 px-4 py-3 text-sm 
-                  text-gray-700 hover:bg-blue-50 hover:text-blue-700 
-                  transition-all duration-200 group"
+                  className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 group"
                   onClick={() => setIsDropdownOpen(false)}>
-                  <div
-                    className="w-8 h-8 rounded-lg bg-blue-100 
-                    group-hover:bg-blue-200 flex items-center justify-center transition-colors">
+                  <div className="w-8 h-8 rounded-lg bg-blue-100 group-hover:bg-blue-200 flex items-center justify-center transition-colors">
                     <i className="ri-dashboard-line text-blue-600"></i>
                   </div>
                   <div>
@@ -148,12 +143,8 @@ function LoginBtns() {
 
   return (
     <div className="flex items-center gap-3">
-      <Button to="/login" type="secondary">
-        Log In
-      </Button>
-      <Button to="/signup" type="primary">
-        Sign Up
-      </Button>
+      <Button to="/login" variation="secondary" size="small" className="rounded-full">Log In</Button>
+      <Button to="/signup" variation="primary" size="small" className="rounded-full shadow-md hover:shadow-lg">Sign Up</Button>
     </div>
   );
 }

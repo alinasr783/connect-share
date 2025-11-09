@@ -1,5 +1,6 @@
 import {useForm} from "react-hook-form";
-import {useState, useRef} from "react";
+import {useState, useRef, useEffect} from "react";
+import { useSearchParams } from "react-router-dom";
 import Button from "../../ui/Button";
 import useSignup from "./useSignup";
 import SpinnerMini from "../../ui/SpinnerMini";
@@ -14,12 +15,12 @@ const userTypeOptions = [
 
 const steps = [
   {
-    title: "Account Info",
+    title: "Account info",
     description: "Basic details",
   },
   {
-    title: "Role Selection",
-    description: "Choose your role",
+    title: "Choose role",
+    description: "Select account type",
   },
   {
     title: "Verification",
@@ -28,12 +29,18 @@ const steps = [
 ];
 
 function SignupForm() {
+  const [searchParams] = useSearchParams();
   const {
     register,
     handleSubmit,
     formState: {errors},
     watch,
-  } = useForm();
+    setValue,
+  } = useForm({
+    defaultValues: {
+      referralCode: "",
+    },
+  });
 
   const {signUp, isSignUpPending} = useSignup();
   const [syndicateCardFile, setSyndicateCardFile] = useState(null);
@@ -42,22 +49,33 @@ function SignupForm() {
   const [selectedSpecialties, setSelectedSpecialties] = useState([]);
   const [currentStep, setCurrentStep] = useState(1);
   const fileInputRef = useRef(null);
+  // Show/hide password
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const password = watch("password");
   const userType = watch("userType");
+  const referralCode = watch("referralCode");
+
+  useEffect(() => {
+    const urlRef = searchParams.get("ref");
+    if (urlRef) {
+      setValue("referralCode", urlRef);
+    }
+  }, [searchParams, setValue]);
 
   const handleSyndicateCardChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       // Validate file type
       if (!file.type.startsWith("image/")) {
-        setSyndicateCardError("Please select an image file");
+        setSyndicateCardError("Please choose a valid image file");
         return;
       }
 
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        setSyndicateCardError("File size must be less than 5MB");
+        setSyndicateCardError("File size must be under 5MB");
         return;
       }
 
@@ -88,25 +106,23 @@ function SignupForm() {
         const step1Valid =
           watch("fullName")?.trim() &&
           watch("email")?.trim() &&
-          watch("phone")?.trim() && // إضافة التحقق من رقم الموبايل
+          watch("phone")?.trim() &&
           watch("password")?.trim() &&
           watch("confirmPassword")?.trim() &&
           !errors.fullName &&
           !errors.email &&
-          !errors.phone && // إضافة التحقق من أخطاء رقم الموبايل
+          !errors.phone &&
           !errors.password &&
           !errors.confirmPassword;
         return step1Valid;
       }
       case 2: {
-        // Check if user type is selected
         const step2Valid =
           watch("userType") && watch("userType") !== "" && !errors.userType;
         return step2Valid;
       }
       case 3: {
         if (userType === "doctor") {
-          // Check if doctor-specific fields are filled
           const step3Valid =
             syndicateCardFile &&
             selectedSpecialties.length > 0 &&
@@ -120,8 +136,7 @@ function SignupForm() {
     }
   };
 
-  const onSubmit = async ({fullName, email, phone, userType, password}) => { // إضافة phone هنا
-    // Validate doctor-specific fields
+  const onSubmit = async ({fullName, email, phone, userType, password}) => {
     if (userType === "doctor") {
       if (!syndicateCardFile) {
         setSyndicateCardError("Syndicate card image is required");
@@ -136,13 +151,13 @@ function SignupForm() {
       }
     }
 
-    // For now, we'll pass the file to be uploaded in the signup process
     signUp({
       fullName,
       email,
-      phone, 
+      phone,
       userType,
       password,
+      referralCode: referralCode || "",
       syndicateCardFile: userType === "doctor" ? syndicateCardFile : undefined,
       specialties: userType === "doctor" ? selectedSpecialties : undefined,
     });
@@ -155,14 +170,14 @@ function SignupForm() {
           <div className="space-y-6">
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Create Your Account
+                Create your account
               </h2>
               <p className="text-gray-600">
-                Let's start with your basic information
+                Let's start with your basic details
               </p>
             </div>
 
-            <FormRow label="Full Name" errors={errors.fullName}>
+            <FormRow label="Full name" errors={errors.fullName}>
               <input
                 id="fullName"
                 disabled={isSignUpPending}
@@ -174,7 +189,7 @@ function SignupForm() {
               />
             </FormRow>
 
-            <FormRow label="Email Address" errors={errors.email}>
+            <FormRow label="Email" errors={errors.email}>
               <input
                 id="email"
                 disabled={isSignUpPending}
@@ -183,7 +198,7 @@ function SignupForm() {
                   required: "Email is required",
                   pattern: {
                     value: /\S+@\S+\.\S+/,
-                    message: "Entered value does not match email format",
+                    message: "Invalid email format",
                   },
                 })}
                 className={`input ${
@@ -192,13 +207,12 @@ function SignupForm() {
               />
             </FormRow>
 
-            {/* إضافة حقل رقم الموبايل الإجباري */}
             <FormRow 
               label={
                 <span>
-                  Phone Number <span className="text-red-500">*</span>
+                  Mobile number <span className="text-red-500">*</span>
                   <span className="block text-sm text-gray-500 font-normal mt-1">
-                    Required for account verification and important notifications
+                    Required for account activation and important notifications
                   </span>
                 </span>
               } 
@@ -210,10 +224,10 @@ function SignupForm() {
                 type="tel"
                 placeholder="e.g., +201234567890"
                 {...register("phone", {
-                  required: "Phone number is required",
+                  required: "Mobile number is required",
                   pattern: {
                     value: /^[\+]?[1-9][\d]{0,15}$/,
-                    message: "Please enter a valid phone number",
+                    message: "Please enter a valid mobile number",
                   },
                 })}
                 className={`input ${
@@ -222,38 +236,77 @@ function SignupForm() {
               />
             </FormRow>
 
-            <FormRow label="Password" errors={errors.password}>
+            <FormRow 
+              label={<span>Referral code <span className="text-gray-400">(optional)</span></span>}
+              errors={errors.referralCode}
+            >
               <input
-                id="password"
+                id="referralCode"
                 disabled={isSignUpPending}
-                type="password"
-                {...register("password", {
-                  required: "Password is required",
-                  minLength: {
-                    value: 8,
-                    message: "Password must be at least 8 characters long",
-                  },
-                })}
-                className={`input ${
-                  errors.password ? "border-red-500" : "border-gray-300"
-                }`}
+                type="text"
+                placeholder="Enter referral code if available"
+                {...register("referralCode")}
+                className={`input border-gray-300`}
               />
+              {referralCode && (
+                <p className="mt-2 text-xs text-green-600">Referral code captured from the URL</p>
+              )}
             </FormRow>
 
-            <FormRow label="Confirm Password" errors={errors.confirmPassword}>
-              <input
-                id="confirmPassword"
-                disabled={isSignUpPending}
-                type="password"
-                {...register("confirmPassword", {
-                  required: "Please confirm your password",
-                  validate: (value) =>
-                    value === password || "The passwords do not match",
-                })}
-                className={`input ${
-                  errors.confirmPassword ? "border-red-500" : "border-gray-300"
-                }`}
-              />
+            <FormRow label="Password" errors={errors.password}>
+              <div className="relative">
+                <input
+                  id="password"
+                  disabled={isSignUpPending}
+                  type={showPassword ? "text" : "password"}
+                  {...register("password", {
+                    required: "Password is required",
+                    minLength: {
+                      value: 8,
+                      message: "Password must be at least 8 characters",
+                    },
+                  })}
+                  className={`input pr-12 ${
+                    errors.password ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  <i className={showPassword ? "ri-eye-off-line text-xl" : "ri-eye-line text-xl"} />
+                </button>
+              </div>
+            </FormRow>
+
+            <FormRow label="Confirm password" errors={errors.confirmPassword}>
+              <div className="relative">
+                <input
+                  id="confirmPassword"
+                  disabled={isSignUpPending}
+                  type={showConfirmPassword ? "text" : "password"}
+                  {...register("confirmPassword", {
+                    required: "Please confirm your password",
+                    validate: (value) =>
+                      value === password || "Passwords do not match",
+                  })}
+                  className={`input pr-12 ${
+                    errors.confirmPassword ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((s) => !s)}
+                  className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700"
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                  title={showConfirmPassword ? "Hide password" : "Show password"}
+                >
+                  <i className={showConfirmPassword ? "ri-eye-off-line text-xl" : "ri-eye-line text-xl"} />
+                </button>
+              </div>
             </FormRow>
           </div>
         );
@@ -263,19 +316,15 @@ function SignupForm() {
           <div className="space-y-6">
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Choose Your Role
+                Choose your role
               </h2>
               <p className="text-gray-600">
-                Tell us what type of account you need
+                Tell us which account type you need
               </p>
             </div>
 
             <FormRow
-              label={
-                <span>
-                  I am a <span className="text-red-500">*</span>
-                </span>
-              }
+              label={<span>I am <span className="text-red-500">*</span></span>}
               errors={errors.userType}>
               <select
                 id="userType"
@@ -288,7 +337,7 @@ function SignupForm() {
                 className={`input ${
                   errors.userType ? "border-red-500" : "border-gray-300"
                 }`}>
-                <option value="">Select your role...</option>
+                <option value="">Choose account type...</option>
                 {userTypeOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
@@ -300,14 +349,12 @@ function SignupForm() {
             {userType && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h3 className="font-medium text-primary mb-2">
-                  {userType === "doctor"
-                    ? "Doctor Account"
-                    : "Provider Account"}
+                  {userType === "doctor" ? "Doctor account" : "Provider account"}
                 </h3>
                 <p className="text-sm text-primary">
                   {userType === "doctor"
-                    ? "You'll need to upload your syndicate card and specify your medical specialties."
-                    : "You can manage clinics, view rentals, and handle payments."}
+                    ? "You will need to upload your syndicate card image and choose your medical specialties."
+                    : "You can manage clinics, track rentals, and process payments."}
                 </p>
               </div>
             )}
@@ -323,20 +370,15 @@ function SignupForm() {
               </h2>
               <p className="text-gray-600">
                 {userType === "doctor"
-                  ? "Upload your documents and specify your specialties"
-                  : "Review your information and complete registration"}
+                  ? "Upload your documents and choose your specialties"
+                  : "Review your information and complete signup"}
               </p>
             </div>
 
             {userType === "doctor" && (
               <>
                 <FormRow
-                  label={
-                    <span>
-                      Syndicate Card Image{" "}
-                      <span className="text-red-500">*</span>
-                    </span>
-                  }
+                  label={<span>Syndicate card image <span className="text-red-500">*</span></span>}
                   errors={
                     syndicateCardError ? {message: syndicateCardError} : null
                   }>
@@ -366,26 +408,20 @@ function SignupForm() {
                     />
                     {!syndicateCardError && (
                       <p className="mt-1 text-sm text-gray-500">
-                        Upload a clear photo of your syndicate card (Required)
+                        Upload a clear image of your card (required)
                       </p>
                     )}
                   </div>
                 </FormRow>
 
-                <FormRow
-                  label={
-                    <span>
-                      Medical Specialties{" "}
-                      <span className="text-red-500">*</span>
-                    </span>
-                  }>
+                <FormRow label={<span>Medical specialties <span className="text-red-500">*</span></span>}>
                   <SpecialtiesSelector
                     selectedSpecialties={selectedSpecialties}
                     onSpecialtiesChange={setSelectedSpecialties}
                     disabled={isSignUpPending}
                   />
                   <p className="mt-1 text-sm text-gray-500">
-                    Enter your medical specialties (Required)
+                    Add your medical specialties (required)
                   </p>
                 </FormRow>
               </>
@@ -394,11 +430,10 @@ function SignupForm() {
             {userType === "provider" && (
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <h3 className="font-medium text-green-900 mb-2">
-                  Ready to Go!
+                  Ready to go!
                 </h3>
                 <p className="text-sm text-green-700">
-                  Your provider account is ready. You can start managing clinics
-                  and rentals after registration.
+                  Your provider account is ready. You can start managing clinics and rentals after signup.
                 </p>
               </div>
             )}
@@ -411,67 +446,63 @@ function SignupForm() {
   };
 
   return (
-    <div className="flex items-center justify-center w-full bg-gray-50">
-      <div className="w-full max-w-2xl bg-white rounded-lg shadow-lg">
-        <div className="p-8">
-          <StepIndicator
-            currentStep={currentStep}
-            totalSteps={3}
-            steps={steps}
-          />
+    <div className="w-full">
+      <StepIndicator
+        currentStep={currentStep}
+        totalSteps={3}
+        steps={steps}
+      />
 
-          <form onSubmit={handleSubmit(onSubmit)}>
-            {renderStepContent()}
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-6">
+        {renderStepContent()}
 
-            {/* Navigation Buttons */}
-            <div className="flex justify-between mt-8">
+        {/* Navigation Buttons */}
+        <div className="flex justify-between mt-8">
+          <Button
+            type="button"
+            onClick={prevStep}
+            disabled={currentStep === 1}
+            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+            Previous
+          </Button>
+
+          {currentStep < 3 ? (
+            <div className="flex flex-col items-end">
               <Button
                 type="button"
-                onClick={prevStep}
-                disabled={currentStep === 1}
-                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                Previous
+                onClick={nextStep}
+                disabled={!canProceedToNext()}
+                className="px-6 py-2 bg-primary text-white rounded-lg 
+                hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                Next
               </Button>
-
-              {currentStep < 3 ? (
-                <div className="flex flex-col items-end">
-                  <Button
-                    type="button"
-                    onClick={nextStep}
-                    disabled={!canProceedToNext()}
-                    className="px-6 py-2 bg-primary text-white rounded-lg 
-                    hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                    Next
-                  </Button>
-                  {!canProceedToNext() && (
-                    <p className="text-sm text-red-500 mt-2 text-right">
-                      Please complete all required fields to continue
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-col items-end">
-                  <Button
-                    type="submit"
-                    disabled={isSignUpPending || !canProceedToNext()}
-                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                    {isSignUpPending ? (
-                      <SpinnerMini />
-                    ) : (
-                      "Complete Registration"
-                    )}
-                  </Button>
-                  {!canProceedToNext() && !isSignUpPending && (
-                    <p className="text-sm text-red-500 mt-2 text-right">
-                      Please complete all required fields to finish registration
-                    </p>
-                  )}
-                </div>
+              {!canProceedToNext() && (
+                <p className="text-sm text-red-500 mt-2 text-right">
+                  Please complete all required fields to continue
+                </p>
               )}
             </div>
-          </form>
+          ) : (
+            <div className="flex flex-col items-end">
+              <Button
+                type="submit"
+                disabled={isSignUpPending || !canProceedToNext()}
+                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                {isSignUpPending ? (
+                  <SpinnerMini />
+                ) : (
+                  "Complete signup"
+                )}
+              </Button>
+              {!canProceedToNext() && !isSignUpPending && (
+                <p className="text-sm text-red-500 mt-2 text-right">
+                  Please complete all required fields to finish signup
+                </p>
+              )}
+            </div>
+          )}
         </div>
-      </div>
+      </form>
     </div>
   );
 }

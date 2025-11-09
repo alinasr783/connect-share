@@ -11,6 +11,9 @@ import {
 import { getProviderTransactions, updateTransactionStatus } from '../services/apiFinancials';
 import { toast } from 'react-hot-toast';
 import supabase from '../services/supabase';
+import BookingsTab from '../features/financial/BookingsTab';
+import WithdrawalsTab from '../features/financial/WithdrawalsTab';
+import FinancialOverview from '../features/financial/FinancialOverview';
 
 // دالة لدمج classes
 function cn(...classes) {
@@ -211,7 +214,7 @@ const TableHead = ({ className, ...props }) => {
   return (
     <th
       className={cn(
-        'h-12 px-4 text-left align-middle font-medium text-gray-600 [&:has([role=checkbox])]:pr-0',
+        'h-12 px-4 text-left align-middle font-medium text-gray-600 [&:has([checkbox])]:pr-0',
         className
       )}
       {...props}
@@ -222,7 +225,7 @@ const TableHead = ({ className, ...props }) => {
 const TableCell = ({ className, ...props }) => {
   return (
     <td
-      className={cn('p-4 align-middle [&:has([role=checkbox])]:pr-0', className)}
+      className={cn('p-4 align-middle [&:has([checkbox])]:pr-0', className)}
       {...props}
     />
   );
@@ -1112,400 +1115,16 @@ const FinancialManagement = () => {
 
             {/* Overview Tab */}
             <TabsContent value="overview" className="mt-0">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Recent Bookings */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Recent Bookings</CardTitle>
-                    <CardDescription>Latest booking transactions</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {recent.map((booking) => {
-                        const StatusIcon = statusConfig[booking.status]?.icon || AlertCircleIcon;
-                        const statusVariant = statusConfig[booking.status]?.variant || 'secondary';
-                        
-                        return (
-                          <div key={booking.id} className="flex items-center justify-between p-3 border rounded-lg">
-                            <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                                <UserIcon className="h-5 w-5 text-blue-600" />
-                              </div>
-                              <div>
-                                <div className="font-medium">
-                                  {booking.docId?.fullName || 'Unknown Doctor'}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  {booking.clinicId?.name || 'Unknown Clinic'}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <div className="font-semibold">{formatCurrency(booking.price)}</div>
-                              <Badge variant={statusVariant} className="gap-1 mt-1">
-                                <StatusIcon className="h-3 w-3" />
-                                {statusConfig[booking.status]?.label || booking.status}
-                              </Badge>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Profit Analysis */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Profit Analysis</CardTitle>
-                    <CardDescription>Detailed breakdown of revenue and profit</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Total Bookings Revenue:</span>
-                        <span className="font-semibold">{formatCurrency(financialStats.totalRevenue)}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Platform Commission (20%):</span>
-                        <span className="font-semibold text-green-600">{formatCurrency(financialStats.commission)}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Provider Payouts (80%):</span>
-                        <span className="font-semibold text-blue-600">{formatCurrency(financialStats.totalPayouts)}</span>
-                      </div>
-                      <div className="border-t pt-4">
-                        <div className="flex justify-between items-center">
-                          <span className="font-semibold">Net Profit:</span>
-                          <span className="font-bold text-lg text-green-600">{formatCurrency(financialStats.commission)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Financial Summary */}
-              <Card className="mt-6">
-                <CardHeader>
-                  <CardTitle>Financial Summary</CardTitle>
-                  <CardDescription>Comprehensive financial overview</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div className="text-center p-4 border rounded-lg">
-                      <div className="text-2xl font-bold text-green-600">{formatCurrency(financialStats.totalRevenue)}</div>
-                      <div className="text-sm text-gray-600">Total Revenue</div>
-                    </div>
-                    {/* <div className="text-center p-4 border rounded-lg">
-                      <div className="text-2xl font-bold text-blue-600">{formatCurrency(financialStats.monthlyRevenue)}</div>
-                      <div className="text-sm text-gray-600">Monthly Revenue</div>
-                    </div> */}
-                    <div className="text-center p-4 border rounded-lg">
-                      <div className="text-2xl font-bold text-purple-600">20%</div>
-                      <div className="text-sm text-gray-600">Profit Margin</div>
-                    </div>
-                    <div className="text-center p-4 border rounded-lg">
-                      <div className="text-2xl font-bold text-yellow-600">{formatCurrency(financialStats.commission)}</div>
-                      <div className="text-sm text-gray-600">Total Commission</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <FinancialOverview stats={financialStats} />
             </TabsContent>
 
-            {/* Bookings Tab */}
+            {/* Withdrawals Tab */}
             <TabsContent value="withdrawals" className="mt-0">
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-col sm:flex-row justify-between gap-4">
-                  <Select value={withdrawalStatusFilter} onValueChange={setWithdrawalStatusFilter}>
-                    <SelectTrigger className="w-full sm:w-[180px]">
-                      <span className="flex items-center gap-2">
-                        <FilterIcon className="h-4 w-4 text-gray-500" />
-                        <span>Filter by status</span>
-                      </span>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="approved">Approved</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="rounded-md border border-gray-200">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Request ID</TableHead>
-                        <TableHead>Provider</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Payment Method</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {withdrawalRequestsData?.data?.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                            No withdrawal requests found
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        withdrawalRequestsData?.data?.map((request) => (
-                          <TableRow key={request.id}>
-                            <TableCell>WD-{request.id.toString().padStart(4, '0')}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <UserIcon className="h-4 w-4 text-gray-500" />
-                                {request.user?.fullName || request.userId}
-                              </div>
-                            </TableCell>
-                            <TableCell className="font-medium">{formatCurrency(request.amount)}</TableCell>
-                            <TableCell>
-                              {request.method?.type ? (
-                                <div className="text-sm">
-                                  {request.method.type} {request.method.end_numbers ? `• ${request.method.end_numbers}` : ''}
-                                </div>
-                              ) : (
-                                request.method_id || request.payment_method || 'N/A'
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                variant={
-                                  request.status === 'completed' ? 'success' :
-                                  request.status === 'pending' ? 'warning' :
-                                  request.status === 'approved' ? 'default' :
-                                  request.status === 'rejected' ? 'destructive' : 'secondary'
-                                }
-                              >
-                                {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>{formatDate(request.created_at)}</TableCell>
-                            <TableCell className="text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger onClick={() => handleWithdrawalDropdownToggle(request.id)}>
-                                  <Button variant="ghost" size="icon">
-                                    <MoreVerticalIcon className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent
-                                  open={openWithdrawalDropdownId === request.id}
-                                  onClose={handleCloseWithdrawalDropdown}
-                                >
-                                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    onClick={() => updateWithdrawalStatus({ 
-                                      payoutId: request.id, 
-                                      status: 'approved' 
-                                    })}
-                                    disabled={request.status !== 'pending'}
-                                  >
-                                    <CheckCircleIcon className="h-4 w-4 mr-2 text-green-500" />
-                                    Approve Request
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => updateWithdrawalStatus({ 
-                                      payoutId: request.id, 
-                                      status: 'completed' 
-                                    })}
-                                    disabled={request.status !== 'approved'}
-                                  >
-                                    <CheckCircleIcon className="h-4 w-4 mr-2 text-blue-500" />
-                                    Mark as Completed
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => updateWithdrawalStatus({ 
-                                      payoutId: request.id, 
-                                      status: 'rejected' 
-                                    })}
-                                    disabled={request.status !== 'pending'}
-                                  >
-                                    <XCircleIcon className="h-4 w-4 mr-2 text-red-500" />
-                                    Reject Request
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-
-                {withdrawalRequestsData?.totalPages > 1 && (
-                  <div className="flex justify-between items-center mt-4">
-                    <p className="text-sm text-gray-600">
-                      Showing {withdrawalRequestsData.data.length} of {withdrawalRequestsData.totalCount} requests
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        disabled={withdrawalPage === 1}
-                        onClick={() => setWithdrawalPage(withdrawalPage - 1)}
-                      >
-                        Previous
-                      </Button>
-                      <Button
-                        variant="outline"
-                        disabled={withdrawalPage >= withdrawalRequestsData.totalPages}
-                        onClick={() => setWithdrawalPage(withdrawalPage + 1)}
-                      >
-                        Next
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <WithdrawalsTab />
             </TabsContent>
 
             <TabsContent value="bookings" className="mt-0">
-              <div className="rounded-md border border-gray-200 overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Booking ID</TableHead>
-                      <TableHead>Doctor</TableHead>
-                      <TableHead>Clinic</TableHead>
-                      <TableHead>Provider</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredBookings.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                          No bookings found
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredBookings.map((booking) => {
-                        const StatusIcon = statusConfig[booking.status]?.icon || AlertCircleIcon;
-                        const statusVariant = statusConfig[booking.status]?.variant || 'secondary';
-                        
-                        return (
-                          <TableRow key={booking.id}>
-                            <TableCell className="font-medium">BK-{booking.id.toString().padStart(3, '0')}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                                  <UserIcon className="h-4 w-4 text-blue-600" />
-                                </div>
-                                <div>
-                                  <div className="font-medium">
-                                    {booking.docId?.fullName || 'Unknown Doctor'}
-                                  </div>
-                                  <div className="text-xs text-gray-500">Doctor</div>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <BuildingIcon className="h-4 w-4 text-gray-500" />
-                                <span>{booking.clinicId?.name || 'Unknown Clinic'}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <UserIcon className="h-4 w-4 text-gray-500" />
-                                <span>{booking.provId?.fullName || 'Unknown Provider'}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="font-semibold text-green-600">
-                              {formatCurrency(booking.price)}
-                            </TableCell>
-                            <TableCell>
-                              <div className="text-sm text-gray-500">
-                                {formatDate(booking.created_at)}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant={statusVariant} className="gap-1">
-                                <StatusIcon className="h-3 w-3" />
-                                {statusConfig[booking.status]?.label || booking.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger onClick={() => handleDropdownToggle(booking.id)}>
-                                  <Button variant="ghost" size="icon">
-                                    <MoreVerticalIcon className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent 
-                                  open={openDropdownId === booking.id}
-                                  onClose={handleCloseDropdown}
-                                >
-                                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem onClick={() => handleViewDetails(booking)}>
-                                    <EyeIcon className="h-4 w-4 mr-2" />
-                                    View Details
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuLabel>Update Status</DropdownMenuLabel>
-                                  <DropdownMenuItem onClick={() => handleUpdateStatus(booking.id, 'completed')}>
-                                    <CheckCircleIcon className="h-4 w-4 mr-2 text-green-500" />
-                                    Mark as Completed
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleUpdateStatus(booking.id, 'confirmed')}>
-                                    <CheckCircleIcon className="h-4 w-4 mr-2 text-blue-500" />
-                                    Mark as Confirmed
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleUpdateStatus(booking.id, 'pending')}>
-                                    <AlertCircleIcon className="h-4 w-4 mr-2 text-yellow-500" />
-                                    Mark as Pending
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleUpdateStatus(booking.id, 'cancelled', 'Cancelled by admin')}>
-                                    <XCircleIcon className="h-4 w-4 mr-2 text-red-500" />
-                                    Cancel Booking
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Pagination for Bookings */}
-              {totalBookingsCount > PAGE_SIZE && (
-                <div className="flex justify-between items-center mt-4">
-                  <p className="text-sm text-gray-600">
-                    Showing {filteredBookings.length} of {totalBookingsCount} bookings
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      disabled={page === 1}
-                      onClick={() => setPage(page - 1)}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      variant="outline"
-                      disabled={page * PAGE_SIZE >= totalBookingsCount}
-                      onClick={() => setPage(page + 1)}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              )}
+              <BookingsTab />
             </TabsContent>
           </Tabs>
         </CardContent>
@@ -1532,8 +1151,15 @@ const FinancialManagement = () => {
                 <div className="space-y-2">
                   <Label className="text-gray-500">Status</Label>
                   <div>
-                    <Badge variant={statusConfig[selectedBooking.status]?.variant || 'secondary'}>
-                      {statusConfig[selectedBooking.status]?.label || selectedBooking.status}
+                    <Badge
+                      variant={
+                        selectedBooking.status === 'completed' ? 'success' :
+                        selectedBooking.status === 'pending' ? 'warning' :
+                        selectedBooking.status === 'confirmed' ? 'default' :
+                        selectedBooking.status === 'cancelled' ? 'destructive' : 'secondary'
+                      }
+                    >
+                      {selectedBooking.status ? selectedBooking.status.charAt(0).toUpperCase() + selectedBooking.status.slice(1) : 'Unknown'}
                     </Badge>
                   </div>
                 </div>

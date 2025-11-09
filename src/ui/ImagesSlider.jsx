@@ -15,7 +15,7 @@ function ImagesSlider({images, className = ""}) {
       if (!isDragging) {
         setCurrentIndex((prev) => (prev + 1) % images.length);
       }
-    }, 5000);
+    }, 4000);
 
     return () => clearInterval(interval);
   }, [images.length, isDragging]);
@@ -95,7 +95,7 @@ function ImagesSlider({images, className = ""}) {
   if (!images || images.length === 0) {
     return (
       <div
-        className={`bg-gray-100 rounded-lg flex items-center justify-center ${className}`}>
+        className={`bg-gray-100 rounded-2xl flex items-center justify-center ${className}`}>
         <div className="text-center text-gray-500">
           <i className="ri-image-line text-4xl mb-2"></i>
           <p>No images available</p>
@@ -105,7 +105,7 @@ function ImagesSlider({images, className = ""}) {
   }
 
   return (
-    <div className={`relative overflow-hidden rounded-lg ${className}`}>
+    <div className={`relative overflow-hidden rounded-2xl group ${className}`}>
       {/* Main Slider */}
       <div
         ref={sliderRef}
@@ -118,11 +118,8 @@ function ImagesSlider({images, className = ""}) {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         style={{
-          transform: `translateX(${
-            -currentIndex * 100 +
-            (translateX / sliderRef.current?.offsetWidth) * 100
-          }%)`,
-          transition: isDragging ? "none" : "transform 0.3s ease-in-out",
+          transform: `translateX(${ -currentIndex * 100 + (translateX / sliderRef.current?.offsetWidth) * 100 }%)`,
+          transition: isDragging ? "none" : "transform 0.35s ease-in-out",
         }}>
         <div className="flex h-full">
           {images.map((image, index) => (
@@ -143,14 +140,14 @@ function ImagesSlider({images, className = ""}) {
         <>
           <button
             onClick={goToPrevious}
-            className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-all duration-200 opacity-0 group-hover:opacity-100"
+            className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-2 transition-all duration-200 opacity-0 group-hover:opacity-100 shadow-sm hover:shadow-md"
             aria-label="Previous image">
             <i className="ri-arrow-left-line text-xl"></i>
           </button>
 
           <button
             onClick={goToNext}
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-all duration-200 opacity-0 group-hover:opacity-100"
+            className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-2 transition-all duration-200 opacity-0 group-hover:opacity-100 shadow-sm hover:shadow-md"
             aria-label="Next image">
             <i className="ri-arrow-right-line text-xl"></i>
           </button>
@@ -159,15 +156,13 @@ function ImagesSlider({images, className = ""}) {
 
       {/* Dots Indicator */}
       {images.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full">
           {images.map((_, index) => (
             <button
               key={index}
               onClick={() => goToSlide(index)}
               className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                index === currentIndex
-                  ? "bg-white scale-125"
-                  : "bg-white/50 hover:bg-white/75"
+                index === currentIndex ? "bg-white scale-125" : "bg-white/60 hover:bg-white/80"
               }`}
               aria-label={`Go to slide ${index + 1}`}
             />
@@ -177,12 +172,12 @@ function ImagesSlider({images, className = ""}) {
 
       {/* Image Counter */}
       {images.length > 1 && (
-        <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+        <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs shadow-sm">
           {currentIndex + 1} / {images.length}
         </div>
       )}
 
-      {/* Loading Overlay */}
+      {/* Drag Overlay */}
       {isDragging && (
         <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
           <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>

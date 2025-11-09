@@ -1,4 +1,4 @@
-import {useNavigate} from "react-router-dom";
+import {useNavigate, Link, useSearchParams} from "react-router-dom";
 import {useQuery} from "@tanstack/react-query";
 import SignupForm from "../features/auth/SignupForm";
 import {getCurrentUser} from "../services/apiAuth";
@@ -6,6 +6,8 @@ import Heading from "../ui/Heading";
 
 function Signup() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const referralCode = searchParams.get("ref") || "";
 
   const {data: session} = useQuery({
     queryKey: ["session"],
@@ -17,8 +19,42 @@ function Signup() {
   }
 
   return (
-    <div className="flex items-center min-h-screen justify-center bg-gray-50 py-8">
-      <SignupForm />
+    <div className="min-h-screen w-full flex items-center justify-center p-4">
+      <div className="flex flex-col md:flex-row w-full max-w-6xl bg-white/95 rounded-3xl shadow-2xl overflow-hidden">
+        {/* Left Panel */}
+        <div className="flex-1 relative overflow-hidden md:block hidden">
+          <div className="absolute top-6 left-6 z-10">
+            <button
+              onClick={() => navigate("/")}
+              className="w-10 h-10 bg-black/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-black/30 transition-all"
+            >
+              <i className="ri-arrow-left-line text-white text-xl" />
+            </button>
+          </div>
+
+          <div className="absolute inset-0">
+            <img
+              src="https://i.ibb.co/fzPfrYgp/Purple-and-Black-3-D-Geometric-Cube-Phone-Wallpaper.png"
+              alt="Purple geometric cubes"
+              className="w-full h-full object-cover"
+            />
+            <div className="w-full h-full bg-gradient-to-br from-indigo-500/60 via-blue-600/60 to-indigo-800/60" />
+            {/* Left panel text removed per request */}
+          </div>
+        </div>
+
+        {/* Right Panel */}
+        <div className="flex-1 p-8 flex flex-col justify-center">
+          <div className="mb-8">
+            <Heading as="h2">Sign up</Heading>
+            <p className="text-gray-600 mt-2">
+              Already have an account?
+              <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium ml-1">Log in</Link>
+            </p>
+          </div>
+          <SignupForm referralCodeFromUrl={referralCode} />
+        </div>
+      </div>
     </div>
   );
 }

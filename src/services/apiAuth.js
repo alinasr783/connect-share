@@ -1,7 +1,7 @@
 import supabase from "./supabase";
 import { uploadSyndicateCard } from "./apiStorage";
 
-export async function signup({ fullName, email, phone, userType, password, syndicateCardFile, specialties }) {
+export async function signup({ fullName, email, phone, userType, password, syndicateCardFile, specialties, referralCode }) {
     try {
         // 1. Check if user already exists
         const { data: existingUser, error: userCheckError } = await supabase
@@ -26,6 +26,8 @@ export async function signup({ fullName, email, phone, userType, password, syndi
             phone: phone, // إضافة رقم الموبايل هنا
             medicalLicenseNumber: '',
             status: userType === 'doctor' ? 'inactive' : 'active', // Doctors start as inactive
+            // حفظ كود الإحالة المستخدم (إن وُجد) داخل الميتاداتا بدون لمسه لجدول users لتجنب أخطاء السكيمة
+            referralCodeUsed: referralCode || '',
         };
 
         // Add doctor-specific data
