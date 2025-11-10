@@ -7,7 +7,6 @@ import Heading from "../ui/Heading";
 function Signup() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const referralCode = searchParams.get("ref") || "";
 
   const {data: session} = useQuery({
     queryKey: ["session"],
@@ -52,7 +51,7 @@ function Signup() {
               <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium ml-1">Log in</Link>
             </p>
           </div>
-          <SignupForm referralCodeFromUrl={referralCode} />
+          <SignupForm />
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import {useForm} from "react-hook-form";
-import {useState, useRef, useEffect} from "react";
+import {useState, useRef} from "react";
 import { useSearchParams } from "react-router-dom";
 import Button from "../../ui/Button";
 import useSignup from "./useSignup";
@@ -35,12 +35,7 @@ function SignupForm() {
     handleSubmit,
     formState: {errors},
     watch,
-    setValue,
-  } = useForm({
-    defaultValues: {
-      referralCode: "",
-    },
-  });
+  } = useForm();
 
   const {signUp, isSignUpPending} = useSignup();
   const [syndicateCardFile, setSyndicateCardFile] = useState(null);
@@ -55,14 +50,7 @@ function SignupForm() {
 
   const password = watch("password");
   const userType = watch("userType");
-  const referralCode = watch("referralCode");
 
-  useEffect(() => {
-    const urlRef = searchParams.get("ref");
-    if (urlRef) {
-      setValue("referralCode", urlRef);
-    }
-  }, [searchParams, setValue]);
 
   const handleSyndicateCardChange = (e) => {
     const file = e.target.files[0];
@@ -151,13 +139,15 @@ function SignupForm() {
       }
     }
 
+    const referralCodeFromUrl = searchParams.get("ref") || "";
+
     signUp({
       fullName,
       email,
       phone,
       userType,
       password,
-      referralCode: referralCode || "",
+      referralCode: referralCodeFromUrl,
       syndicateCardFile: userType === "doctor" ? syndicateCardFile : undefined,
       specialties: userType === "doctor" ? selectedSpecialties : undefined,
     });
@@ -236,22 +226,7 @@ function SignupForm() {
               />
             </FormRow>
 
-            <FormRow 
-              label={<span>Referral code <span className="text-gray-400">(optional)</span></span>}
-              errors={errors.referralCode}
-            >
-              <input
-                id="referralCode"
-                disabled={isSignUpPending}
-                type="text"
-                placeholder="Enter referral code if available"
-                {...register("referralCode")}
-                className={`input border-gray-300`}
-              />
-              {referralCode && (
-                <p className="mt-2 text-xs text-green-600">Referral code captured from the URL</p>
-              )}
-            </FormRow>
+            {/* Referral code field removed */}
 
             <FormRow label="Password" errors={errors.password}>
               <div className="relative">
