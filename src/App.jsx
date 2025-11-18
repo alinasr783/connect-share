@@ -1,6 +1,7 @@
 import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
+import { useEffect } from "react";
 import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
-import {Toaster} from "react-hot-toast";
+import {Toaster, toast} from "react-hot-toast";
 import {BrowserRouter, Navigate, Route, Routes} from "react-router-dom";
 import useAuthListener from "./features/auth/useAuthListener";
 import AdminAppLayout from "./features/Dashboard/AdminAppLayout";
@@ -29,12 +30,14 @@ import NotFound from "./ui/NotFound";
 import ProtectedRoutes from "./ui/ProtectedRoutes";
 import RoleProtectedRoute from "./ui/RoleProtectedRoute";
 import AdminDoctorDetails from "./pages/AdminDoctorDetails";
+import AdminNotifications from "./pages/AdminNotifications";
 
 import UserManagement from "./pages/UserManagement";
 import BookingManagment from "./pages/BookingManagement";
 import UserProfile from "./pages/UserProfile";
 
 import FinancialManagement from "./pages/FinancialManagement";
+import { onForegroundMessage } from "./services/notifications";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -54,7 +57,21 @@ function App() {
 }
 
 function AuthWrapper() {
-  useAuthListener(); // Listen for auth state changes
+  useAuthListener();
+  useEffect(() => {
+    let unsubscribe
+    const setup = async () => {
+      unsubscribe = await onForegroundMessage((payload) => {
+        const title = payload?.notification?.title || ""
+        const body = payload?.notification?.body || ""
+        if (title || body) toast(`${title}${body ? `: ${body}` : ""}`)
+      })
+    }
+    setup()
+    return () => {
+      if (typeof unsubscribe === "function") unsubscribe()
+    }
+  }, [])
 
   return (
     <BrowserRouter>
@@ -112,6 +129,7 @@ function AuthWrapper() {
             <Route path="booking-management" element={<BookingManagment />} />
             <Route path="users/:id" element={<UserProfile/>} />
             <Route path="financial-management" element={<FinancialManagement />} />
+            <Route path="notifications" element={<AdminNotifications />} />
           </Route>
         </Route>
 

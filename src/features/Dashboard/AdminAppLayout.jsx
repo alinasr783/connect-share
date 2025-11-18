@@ -17,6 +17,7 @@ function AdminAppLayout() {
     {to: "users", label: "Users", icon: "ri-user-line"},
     {to: "bookings", label: "Bookings", icon: "ri-calendar-line"},
     {to: "financial-management", label: "Financials", icon: "ri-money-dollar-circle-line"},
+    {to: "notifications", label: "Notifications", icon: "ri-notification-2-line"},
   ];
 
   // دالة للتحقق من اتصال Realtime
