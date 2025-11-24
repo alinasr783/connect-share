@@ -126,10 +126,8 @@ export async function logout() {
 export async function getCurrentUser() {
     // Get the current authenticated user from the auth client
     const { data: authUserData, error: authUserError } = await supabase.auth.getUser();
-
     if (authUserError) {
-        console.error('Error getting auth user:', authUserError);
-        throw new Error('Error getting current user: ' + authUserError.message);
+        return null;
     }
 
     if (!authUserData?.user) return null;

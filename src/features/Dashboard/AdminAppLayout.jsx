@@ -6,6 +6,7 @@ import { useRealTimeNotifications } from "../../services/useRealTimeNotification
 
 function AdminAppLayout() {
   const [isConnected, setIsConnected] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   console.log('🏠 AdminAppLayout component rendering...');
 
@@ -18,6 +19,7 @@ function AdminAppLayout() {
     {to: "bookings", label: "Bookings", icon: "ri-calendar-line"},
     {to: "financial-management", label: "Financials", icon: "ri-money-dollar-circle-line"},
     {to: "notifications", label: "Notifications", icon: "ri-notification-2-line"},
+    {to: "articles", label: "Articles", icon: "ri-file-text-line"},
   ];
 
   // دالة للتحقق من اتصال Realtime
@@ -65,28 +67,40 @@ function AdminAppLayout() {
 
   return (
     <div className="flex h-screen w-screen">
-      <Sidebar links={links} />
+      {/* Desktop Sidebar */}
+      <div className="hidden md:block">
+        <Sidebar links={links} />
+      </div>
+
+      {/* Mobile header with toggle */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-white/90 backdrop-blur border-b border-gray-200 flex items-center justify-between px-4 h-12">
+        <button
+          aria-label={mobileOpen ? "Close menu" : "Open menu"}
+          onClick={() => setMobileOpen((v) => !v)}
+          className="inline-flex items-center justify-center h-10 w-10 rounded-md border border-gray-300 bg-white hover:bg-gray-100"
+        >
+          <i className={mobileOpen ? "ri-close-line" : "ri-menu-line"}></i>
+        </button>
+        <div className="text-sm text-gray-700">Admin Panel</div>
+        <div className="w-10" />
+      </div>
+
+      {/* Mobile Sidebar Drawer */}
+      {mobileOpen && (
+        <div className="md:hidden">
+          <div
+            className="fixed inset-0 z-40 bg-black/30"
+            onClick={() => setMobileOpen(false)}
+          />
+          <div className="fixed top-12 left-0 bottom-0 z-50 w-64 bg-white shadow-lg border-r border-gray-200">
+            <Sidebar links={links} />
+          </div>
+        </div>
+      )}
+
       
-      {/* مؤشر حالة الاتصال */}
-      {!isConnected && (
-        <div className="fixed top-4 right-4 z-50 animate-pulse">
-          <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-3 py-2 rounded-md text-sm flex items-center gap-2 shadow-sm">
-            <i className="ri-wifi-off-line"></i>
-            <span>Realtime connection offline</span>
-          </div>
-        </div>
-      )}
 
-      {isConnected && (
-        <div className="fixed top-4 right-4 z-50">
-          <div className="bg-green-100 border border-green-400 text-green-800 px-3 py-2 rounded-md text-sm flex items-center gap-2 shadow-sm">
-            <i className="ri-wifi-line"></i>
-            <span>Realtime connected</span>
-          </div>
-        </div>
-      )}
-
-      <main className="flex-1 p-6 overflow-y-auto bg-gray-100/80">
+      <main className="flex-1 p-6 overflow-y-auto bg-gray-100/80 md:pt-0 pt-14">
         <div className="max-w-7xl mx-auto">
           <Outlet />
         </div>

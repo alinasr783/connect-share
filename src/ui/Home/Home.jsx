@@ -7,6 +7,7 @@ import Spinner from "../Spinner";
 const WhyUs = lazy(() => import("./WhyUs"));
 const HowItWorks = lazy(() => import("./HowItWorks"));
 const Testimonials = lazy(() => import("./Testimonials"));
+const LatestArticles = lazy(() => import("./LatestArticles"));
 const FAQ = lazy(() => import("./FAQ"));
 const Start = lazy(() => import("./Start"));
 const Footer = lazy(() => import("./Footer"));
@@ -36,6 +37,10 @@ function Home() {
 
           <Suspense fallback={<SectionLoader />}>
             <Testimonials />
+          </Suspense>
+
+          <Suspense fallback={<SectionLoader />}>
+            <LatestArticles />
           </Suspense>
 
           <Suspense fallback={<SectionLoader />}>

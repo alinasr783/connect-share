@@ -18,10 +18,20 @@ export async function registerFcmTokenForUser() {
   const permission = await Notification.requestPermission()
   if (permission !== "granted") return null
   const vapidKey = "BGk3kMpnATwfSaxRyXm4z2HhYm4Z6USaVSBxBBxj7B1LDit9Rk3u06wzbJcOE0G7-aLuJWZ_N6IkxThTAj3LtZ8"
-  const registration = await navigator.serviceWorker?.ready
-  const token = await getToken(m, { vapidKey, serviceWorkerRegistration: registration })
+  let token
+  try {
+    const registration = await navigator.serviceWorker?.ready
+    token = await getToken(m, { vapidKey, serviceWorkerRegistration: registration })
+  } catch {
+    token = await getToken(m, { vapidKey })
+  }
   if (!token) return null
+  const { data: userData } = await supabase.auth.getUser()
+  const userId = userData?.user?.id
   const { error } = await supabase.auth.updateUser({ data: { fcmToken: token } })
+  if (userId) {
+    try { await supabase.from('users').update({ fcmToken: token }).eq('userId', userId) } catch {}
+  }
   if (error) throw new Error(error.message)
   return token
 }

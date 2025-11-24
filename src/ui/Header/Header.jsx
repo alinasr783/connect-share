@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Logo from "./Logo";
 import NavLinks from "./NavLinks";
 // Removed old LoginBtns usage to render exact actions per new header design
@@ -61,7 +62,9 @@ function Header() {
         {/* Desktop navigation */}
         <div className="hidden items-center gap-2 md:flex">
           <NavLinks />
-          {/* Exact actions per new header-2: outline Sign In + default Get Started */}
+          <ShButton variant="ghost" asChild>
+            <Link to="/articles">Articles</Link>
+          </ShButton>
           <ShButton variant="outline" asChild className="text-gray-700">
             <Link to="/login">login</Link>
           </ShButton>
@@ -82,36 +85,33 @@ function Header() {
         </ShButton>
       </nav>
 
-      {/* Mobile overlay menu */}
-      <div
-        className={cn(
-          "fixed top-14 right-0 bottom-0 left-0 z-50 flex flex-col overflow-hidden border-y bg-white/90 md:hidden",
-          open ? "block" : "hidden"
-        )}
-      >
-        <div className="flex h-full w-full flex-col justify-between gap-y-4 p-4">
-          <div className="grid gap-y-2">
-            {links.map((link) => (
-              <a
-                key={link.label}
-                href={`#${link.sectionId}`}
-                onClick={(e) => scrollToSection(e, link.sectionId)}
-                className="w-full text-left px-4 py-2 rounded-md hover:bg-primary/5 hover:text-primary transition-colors"
-              >
-                {link.label}
-              </a>
-            ))}
+      {open && createPortal(
+        <div className={cn("fixed top-14 right-0 bottom-0 left-0 z-[60] flex flex-col overflow-hidden border-y bg-white/90 md:hidden")}> 
+          <div className="flex h-full w-full flex-col justify-between gap-y-4 p-4">
+            <div className="grid gap-y-2">
+              {links.map((link) => (
+                <a
+                  key={link.label}
+                  href={`#${link.sectionId}`}
+                  onClick={(e) => scrollToSection(e, link.sectionId)}
+                  className="w-full text-left px-4 py-2 rounded-md hover:bg-primary/5 hover:text-primary transition-colors"
+                >
+                  {link.label}
+                </a>
+              ))}
+              <Link to="/articles" onClick={() => setOpen(false)} className="w-full text-left px-4 py-2 rounded-md hover:bg-primary/5 hover:text-primary transition-colors">Articles</Link>
+            </div>
+            <div className="flex flex-col gap-2">
+              <ShButton variant="outline" asChild className="w-full text-gray-700">
+                <Link to="/login">Login</Link>
+              </ShButton>
+              <ShButton asChild className="w-full text-white">
+                <Link to="/signup">Get Started</Link>
+              </ShButton>
+            </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <ShButton variant="outline" asChild className="w-full text-gray-700">
-              <Link to="/login">Login</Link>
-            </ShButton>
-            <ShButton asChild className="w-full text-white">
-              <Link to="/signup">Get Started</Link>
-            </ShButton>
-          </div>
-        </div>
-      </div>
+        </div>, document.body)
+      }
     </header>
   );
 }

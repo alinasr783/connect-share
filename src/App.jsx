@@ -31,6 +31,9 @@ import ProtectedRoutes from "./ui/ProtectedRoutes";
 import RoleProtectedRoute from "./ui/RoleProtectedRoute";
 import AdminDoctorDetails from "./pages/AdminDoctorDetails";
 import AdminNotifications from "./pages/AdminNotifications";
+import AdminArticles from "./pages/AdminArticles";
+import Articles from "./pages/Articles";
+import ArticleDetails from "./pages/ArticleDetails";
 
 import UserManagement from "./pages/UserManagement";
 import BookingManagment from "./pages/BookingManagement";
@@ -130,11 +133,14 @@ function AuthWrapper() {
             <Route path="users/:id" element={<UserProfile/>} />
             <Route path="financial-management" element={<FinancialManagement />} />
             <Route path="notifications" element={<AdminNotifications />} />
+            <Route path="articles" element={<AdminArticles />} />
           </Route>
         </Route>
 
         <Route path="signup" element={<Signup />} />
         <Route path="login" element={<Login />} />
+        <Route path="articles" element={<Articles />} />
+        <Route path="articles/:id" element={<ArticleDetails />} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

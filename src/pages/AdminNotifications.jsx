@@ -15,6 +15,7 @@ function AdminNotifications() {
   const [sending, setSending] = useState(false)
   const [lastError, setLastError] = useState("")
   const [addId, setAddId] = useState("")
+  const [recipients, setRecipients] = useState([])
 
   const allTargetIds = useMemo(() => {
     const manualList = manualIds
@@ -32,7 +33,7 @@ function AdminNotifications() {
     }
     const { data, error } = await supabase
       .from("users")
-      .select("userId, fullName, email")
+      .select("userId, fullName, email, fcmToken")
       .or(`fullName.ilike.%${query}%,userId.ilike.%${query}%,email.ilike.%${query}%`)
       .order("fullName", { ascending: true })
       .limit(20)
@@ -70,10 +71,15 @@ function AdminNotifications() {
       toast.error("Select at least one user or add IDs")
       return
     }
+    const activeRecipients = recipients.filter((r) => !!r.fcmToken)
+    if (activeRecipients.length === 0) {
+      toast.error("No recipients with valid push tokens")
+      return
+    }
     const payload = { title: title.trim(), body: body.trim() }
     if (import.meta.env.DEV) {
-      allTargetIds.forEach((id) => {
-        toast.success(`Simulated notification to ${id}`)
+      activeRecipients.forEach((r) => {
+        toast.success(`Simulated notification to ${r.fullName || r.userId}`)
       })
       setSelectedIds([])
       setManualIds("")
@@ -83,7 +89,7 @@ function AdminNotifications() {
     }
     try {
       setSending(true)
-      const res = await sendPushToUsers(allTargetIds, payload)
+      const res = await sendPushToUsers(activeRecipients.map((r) => r.userId), payload)
       console.log("send-push result", res)
       toast.success("Notifications queued")
       setLastError("")
@@ -107,6 +113,22 @@ function AdminNotifications() {
     }, 400)
     return () => clearTimeout(t)
   }, [query])
+
+  useEffect(() => {
+    if (allTargetIds.length === 0) {
+      setRecipients([])
+      return
+    }
+    const fetchRecipients = async () => {
+      const { data, error } = await supabase
+        .from("users")
+        .select("userId, fullName, email, fcmToken")
+        .in("userId", allTargetIds)
+      if (error) return
+      setRecipients(data || [])
+    }
+    fetchRecipients()
+  }, [allTargetIds])
 
   return (
     <div className="space-y-6">
@@ -177,7 +199,20 @@ function AdminNotifications() {
                           />
                           <div>
                             <div className="text-gray-900 font-medium text-sm">{u.fullName || "User"}</div>
-                            <div className="text-gray-600 text-xs">{u.email}</div>
+                            <div className="text-gray-600 text-xs">
+                              {u.email}
+                              {u.fcmToken ? (
+                                <span className="ml-2 inline-flex items-center text-green-600">
+                                  <i className="ri-check-line mr-1"></i>
+                                  push enabled
+                                </span>
+                              ) : (
+                                <span className="ml-2 inline-flex items-center text-gray-500">
+                                  <i className="ri-notification-off-line mr-1"></i>
+                                  no token
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                         <div className="text-xs text-gray-400">{u.userId}</div>
@@ -210,6 +245,14 @@ function AdminNotifications() {
                         {id}
                       </button>
                     ))}
+                  </div>
+                )}
+                {recipients.length > 0 && (
+                  <div className="mt-3 text-xs text-gray-700">
+                    <div className="flex items-center gap-2">
+                      <i className="ri-user-received-line"></i>
+                      <span>Recipients with push tokens: {recipients.filter((r) => !!r.fcmToken).length}</span>
+                    </div>
                   </div>
                 )}
               </div>
